@@ -46,8 +46,8 @@ Actualizá las URLs en `CITATION.cff` y `README.md` con tu usuario real.
 4. Branch: `main`
 5. Main file: `streamlit_app.py`
 6. **Deploy**
-7. La URL será similar a: `https://carta-solar-gbarea-inahe.streamlit.app`
-8. Actualizá `README.md` → sección **App web** con la URL real
+7. **URL desplegada:** [https://carta-solar.streamlit.app/](https://carta-solar.streamlit.app/)
+8. La URL también figura en `README.md` → sección **App web**
 
 ## 5. Probar localmente la versión web
 
@@ -64,7 +64,7 @@ streamlit run streamlit_app.py
   title        = {Carta Solar --- Aleros Norte},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.0.2},
+  version      = {1.0.4},
   doi          = {10.5281/zenodo.20725119},
   url          = {https://doi.org/10.5281/zenodo.20725119}
 }

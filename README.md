@@ -8,7 +8,7 @@ Herramienta de código abierto para generar **cartas solares estereográficas** 
 | Campo | Valor |
 | --- | --- |
 | **Nombre** | Carta Solar — Aleros Norte |
-| **Versión actual** | 1.0.2 |
+| **Versión actual** | 1.0.4 |
 | **Autores** | Gustavo Barea y Carolina Ganem |
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |
@@ -32,7 +32,9 @@ _Diagrama en sección de fachada norte con alero, ventana y ángulo α:_
 
 Versión en navegador, sin instalar Python:
 
-**URL app web:** _pendiente — desplegar en [Streamlit Cloud](https://share.streamlit.io) (ver [DEPLOYMENT.md](DEPLOYMENT.md))_
+**App en línea:** [carta-solar.streamlit.app](https://carta-solar.streamlit.app/)
+
+Instalación local:
 
 ```bash
 pip install -r requirements.txt
@@ -52,7 +54,7 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
 
 **APA (7.ª ed.)**
 
-> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros Norte* (Version 1.0.2) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725119
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros Norte* (Version 1.0.4) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725119
 
 **BibTeX**
 
@@ -62,7 +64,7 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
   title        = {Carta Solar --- Aleros Norte},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.0.2},
+  version      = {1.0.4},
   doi          = {10.5281/zenodo.20725119},
   url          = {https://doi.org/10.5281/zenodo.20725119}
 }
@@ -94,7 +96,7 @@ Instrucciones completas en **[DEPLOYMENT.md](DEPLOYMENT.md)**:
 
 1. Push a GitHub público
 2. Release en GitHub → archivo persistente y DOI en Zenodo ([10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119))
-3. Deploy gratuito en [Streamlit Cloud](https://share.streamlit.io)
+3. App web en [Streamlit Cloud](https://carta-solar.streamlit.app/)
 
 ## Tests
 

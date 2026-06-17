@@ -5,6 +5,22 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.4] - 2026-06-17
+
+### Added
+
+- App web publicada en [Streamlit Cloud](https://carta-solar.streamlit.app/).
+
+### Changed
+
+- README y DEPLOYMENT con URL de la aplicación en línea.
+
+## [1.0.3] - 2026-06-17
+
+### Added
+
+- Capturas de pantalla reales en `docs/carta_solar.png` y `docs/alero_norte.png`.
+
 ## [1.0.2] - 2026-06-17
 
 ### Changed
@@ -37,6 +53,8 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 - Interfaz web (`streamlit_app.py`, Streamlit).
 - Suite de tests con `pytest`.
 
+[1.0.4]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.3...v1.0.4
+[1.0.3]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.1...v1.0.2
 [1.0.1]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/gbarea-INAHE/carta-solar/releases/tag/v1.0.0

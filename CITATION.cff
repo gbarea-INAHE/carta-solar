@@ -14,8 +14,8 @@ authors:
     given-names: Carolina
     name-particle: Dra.
     affiliation: "INAHE — CONICET"
-repository-code: "https://github.com/USUARIO/carta-solar"
-url: "https://github.com/USUARIO/carta-solar"
+repository-code: "https://github.com/gbarea-INAHE/carta-solar"
+url: "https://github.com/gbarea-INAHE/carta-solar"
 doi: 10.5281/zenodo.XXXXXXX
 keywords:
   - solar chart

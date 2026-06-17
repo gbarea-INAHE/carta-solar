@@ -11,7 +11,9 @@ Generador de cartas solares estereográficas con interfaz gráfica y cálculo de
 
 Versión en navegador, sin instalar Python:
 
-**URL:** _pendiente — ver [DEPLOYMENT.md](DEPLOYMENT.md) para desplegar en Streamlit Cloud_
+**Repositorio:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
+
+**URL app web:** _pendiente — desplegar en [Streamlit Cloud](https://share.streamlit.io) (ver [DEPLOYMENT.md](DEPLOYMENT.md))_
 
 ```bash
 pip install -r requirements.txt
@@ -36,7 +38,7 @@ DOI Zenodo: _pendiente — asignar tras release v1.0.0 (ver [DEPLOYMENT.md](DEPL
   year = {2026},
   publisher = {Zenodo},
   doi = {10.5281/zenodo.XXXXXXX},
-  url = {https://github.com/USUARIO/carta-solar}
+  url = {https://github.com/gbarea-INAHE/carta-solar}
 }
 ```
 

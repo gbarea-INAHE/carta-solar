@@ -1,17 +1,36 @@
-# Carta Solar
+# Carta Solar — Aleros Norte
 
-Generador de cartas solares estereográficas con interfaz gráfica y cálculo de aleros en fachada norte.
-
-**Autoría:** Dr. Arq. Gustavo Barea — Dra. Carolina Ganem  
-**Institución:** INAHE — CONICET
-
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20725119.svg)](https://doi.org/10.5281/zenodo.20725119)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+Herramienta de código abierto para generar **cartas solares estereográficas** (transportador SOL-AR) y dimensionar **aleros horizontales en fachada norte** a partir del período crítico de insolación y medidas en corte vertical. Incluye interfaz de escritorio (tkinter) y versión web (Streamlit).
+
+| Campo | Valor |
+| --- | --- |
+| **Nombre** | Carta Solar — Aleros Norte |
+| **Versión actual** | 1.0.2 |
+| **Autores** | Gustavo Barea y Carolina Ganem |
+| **Institución** | INAHE-CONICET |
+| **Licencia** | [MIT](LICENSE) |
+| **DOI Zenodo** | [10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119) |
+
+**Repositorio de desarrollo:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
+
+## Capturas de pantalla
+
+_Carta solar estereográfica con trayectorias, transportador y período crítico resaltado:_
+
+![Carta solar estereográfica](docs/carta_solar.png)
+
+_Diagrama en sección de fachada norte con alero, ventana y ángulo α:_
+
+![Sección — alero norte](docs/alero_norte.png)
+
+> Las imágenes anteriores son placeholders. Reemplazalas por capturas reales siguiendo [docs/README.md](docs/README.md).
 
 ## App web (Streamlit)
 
 Versión en navegador, sin instalar Python:
-
-**Repositorio:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
 
 **URL app web:** _pendiente — desplegar en [Streamlit Cloud](https://share.streamlit.io) (ver [DEPLOYMENT.md](DEPLOYMENT.md))_
 
@@ -29,20 +48,27 @@ python app.py
 
 ## Cómo citar
 
-DOI Zenodo: [10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119)
+Si utilizás este software en trabajos académicos, informes o publicaciones indexadas, citá la versión archivada en Zenodo (no solo el repositorio de GitHub).
+
+**APA (7.ª ed.)**
+
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros Norte* (Version 1.0.2) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725119
+
+**BibTeX**
 
 ```bibtex
 @software{barea2026carta_solar,
-  author = {Barea, Gustavo and Ganem, Carolina},
-  title = {Carta Solar — Aleros Norte},
-  year = {2026},
-  publisher = {Zenodo},
-  doi = {10.5281/zenodo.20725119},
-  url = {https://github.com/gbarea-INAHE/carta-solar}
+  author       = {Barea, Gustavo and Ganem, Carolina},
+  title        = {Carta Solar --- Aleros Norte},
+  year         = {2026},
+  publisher    = {Zenodo},
+  version      = {1.0.2},
+  doi          = {10.5281/zenodo.20725119},
+  url          = {https://doi.org/10.5281/zenodo.20725119}
 }
 ```
 
-También podés usar el archivo [CITATION.cff](CITATION.cff).
+Metadatos adicionales en [CITATION.cff](CITATION.cff). Historial de versiones en [CHANGELOG.md](CHANGELOG.md).
 
 ## Requisitos
 
@@ -67,7 +93,7 @@ El antepecho `h_s` solo se usa en el dibujo en sección; no entra en el cálculo
 Instrucciones completas en **[DEPLOYMENT.md](DEPLOYMENT.md)**:
 
 1. Push a GitHub público
-2. Release en GitHub → DOI en Zenodo ([10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119))
+2. Release en GitHub → archivo persistente y DOI en Zenodo ([10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119))
 3. Deploy gratuito en [Streamlit Cloud](https://share.streamlit.io)
 
 ## Tests
@@ -82,8 +108,10 @@ python -m pytest tests/ -v
 carta_solar/      # núcleo: cálculos, transportador, carta, alero
 app.py            # GUI tkinter (escritorio)
 streamlit_app.py  # GUI web (Streamlit)
+docs/             # capturas de pantalla y documentación visual
 assets/           # logos opcionales
 tests/
+CHANGELOG.md      # historial de versiones
 DEPLOYMENT.md     # guía Zenodo + Streamlit Cloud
 CITATION.cff      # metadatos de citación
 LICENSE           # MIT

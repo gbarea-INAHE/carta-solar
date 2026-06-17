@@ -60,11 +60,12 @@ streamlit run streamlit_app.py
 
 ```bibtex
 @software{barea2026carta_solar,
-  author = {Barea, Gustavo and Ganem, Carolina},
-  title = {Carta Solar — Aleros Norte},
-  year = {2026},
-  publisher = {Zenodo},
-  doi = {10.5281/zenodo.20725119},
-  url = {https://github.com/gbarea-INAHE/carta-solar}
+  author       = {Barea, Gustavo and Ganem, Carolina},
+  title        = {Carta Solar --- Aleros Norte},
+  year         = {2026},
+  publisher    = {Zenodo},
+  version      = {1.0.2},
+  doi          = {10.5281/zenodo.20725119},
+  url          = {https://doi.org/10.5281/zenodo.20725119}
 }
 ```

@@ -29,7 +29,7 @@ python app.py
 
 ## Cómo citar
 
-DOI Zenodo: _pendiente — asignar tras release v1.0.0 (ver [DEPLOYMENT.md](DEPLOYMENT.md))_
+DOI Zenodo: [10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119)
 
 ```bibtex
 @software{barea2026carta_solar,
@@ -37,7 +37,7 @@ DOI Zenodo: _pendiente — asignar tras release v1.0.0 (ver [DEPLOYMENT.md](DEPL
   title = {Carta Solar — Aleros Norte},
   year = {2026},
   publisher = {Zenodo},
-  doi = {10.5281/zenodo.XXXXXXX},
+  doi = {10.5281/zenodo.20725119},
   url = {https://github.com/gbarea-INAHE/carta-solar}
 }
 ```
@@ -67,7 +67,7 @@ El antepecho `h_s` solo se usa en el dibujo en sección; no entra en el cálculo
 Instrucciones completas en **[DEPLOYMENT.md](DEPLOYMENT.md)**:
 
 1. Push a GitHub público
-2. Release `v1.0.0` → DOI en Zenodo
+2. Release en GitHub → DOI en Zenodo ([10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119))
 3. Deploy gratuito en [Streamlit Cloud](https://share.streamlit.io)
 
 ## Tests

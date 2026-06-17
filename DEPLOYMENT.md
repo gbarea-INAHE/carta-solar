@@ -33,11 +33,10 @@ Actualizá las URLs en `CITATION.cff` y `README.md` con tu usuario real.
    - Tag: `v1.0.0`
    - Título: `v1.0.0 — Primera versión publicada`
    - Descripción breve del software
-5. Zenodo creará un registro en unos minutos y asignará un DOI (`10.5281/zenodo.XXXXXXX`)
-6. Copiá el DOI y actualizá:
-   - `CITATION.cff` → campo `doi`
-   - `README.md` → sección **Cómo citar**
-7. Commit y push; opcionalmente un release `v1.0.1` solo con metadatos actualizados
+5. Zenodo creará un registro en unos minutos y asignará un DOI
+6. Copiá el DOI y actualizá `CITATION.cff` y `README.md`
+
+**DOI asignado (v1.0.1):** [10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119)
 
 ## 4. Desplegar app web (Streamlit Cloud, gratis)
 
@@ -65,9 +64,7 @@ streamlit run streamlit_app.py
   title = {Carta Solar — Aleros Norte},
   year = {2026},
   publisher = {Zenodo},
-  doi = {10.5281/zenodo.XXXXXXX},
+  doi = {10.5281/zenodo.20725119},
   url = {https://github.com/gbarea-INAHE/carta-solar}
 }
 ```
-
-Reemplazá `XXXXXXX` por el DOI de Zenodo tras el release v1.0.0.

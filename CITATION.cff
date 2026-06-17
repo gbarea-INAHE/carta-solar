@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "Carta Solar — Aleros Norte"
-version: 1.0.0
+version: 1.0.1
 date-released: 2026-06-16
 license: MIT
 authors:
@@ -16,7 +16,7 @@ authors:
     affiliation: "INAHE — CONICET"
 repository-code: "https://github.com/gbarea-INAHE/carta-solar"
 url: "https://github.com/gbarea-INAHE/carta-solar"
-doi: 10.5281/zenodo.XXXXXXX
+doi: 10.5281/zenodo.20725119
 keywords:
   - solar chart
   - stereographic projection

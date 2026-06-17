@@ -35,6 +35,13 @@ def test_build_config_from_state_custom():
     assert config.critical_months == frozenset({3, 9})
 
 
+def test_build_config_from_state_web_figsize():
+    state = _default_state()
+    config = build_config_from_state(state, for_web=True)
+    assert config.figsize == (12.0, 6.0)
+    assert config.dpi == 120
+
+
 def test_generate_figure_from_state_pipeline():
     config = apply_computed_mask(build_config_from_state(_default_state()))
     fig = generate_carta_solar(config)

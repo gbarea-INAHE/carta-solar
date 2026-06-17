@@ -21,6 +21,12 @@ from carta_solar.critical import (
 from carta_solar.overhang import apply_computed_mask, overhang_projection
 from carta_solar.plot import build_output_basename, generate_carta_solar
 
+# Tamaño base de la figura; en pantalla se muestra al ~50% del ancho principal.
+WEB_FIGSIZE = (12.0, 6.0)
+WEB_DISPLAY_DPI = 120
+EXPORT_DPI = 300
+CHART_WIDTH_RATIO = 0.75
+
 
 @dataclass(frozen=True)
 class AppState:
@@ -38,8 +44,15 @@ class AppState:
     highlight_critical_period: bool
 
 
-def build_config_from_state(state: AppState) -> CartaSolarConfig:
+def build_config_from_state(
+    state: AppState,
+    *,
+    for_web: bool = False,
+) -> CartaSolarConfig:
     """Construye configuración sin calcular α (para tests y formulario)."""
+    web_kwargs = (
+        {"figsize": WEB_FIGSIZE, "dpi": WEB_DISPLAY_DPI} if for_web else {}
+    )
     return CartaSolarConfig(
         site_name=state.site_name,
         lat=state.lat,
@@ -54,6 +67,7 @@ def build_config_from_state(state: AppState) -> CartaSolarConfig:
         critical_hour_start=state.critical_hour_start,
         critical_hour_end=state.critical_hour_end,
         highlight_critical_period=state.highlight_critical_period,
+        **web_kwargs,
     )
 
 
@@ -93,12 +107,13 @@ def _sidebar_state() -> AppState:
     gap_to_overhang_m = st.sidebar.number_input("Vano (cierre ventana → alero)", value=0.3, min_value=0.0, step=0.05)
 
     st.sidebar.header("Período crítico")
-    month_cols = st.sidebar.columns(4)
-    selected_months: set[int] = set()
-    for idx, month in enumerate(range(1, 13)):
-        with month_cols[idx % 4]:
-            if st.checkbox(MONTH_NAMES[month], value=month in DEFAULT_CRITICAL_MONTHS, key=f"m_{month}"):
-                selected_months.add(month)
+    month_options = st.sidebar.multiselect(
+        "Meses críticos",
+        options=list(range(1, 13)),
+        default=sorted(DEFAULT_CRITICAL_MONTHS),
+        format_func=lambda m: MONTH_NAMES[m],
+    )
+    selected_months = set(month_options)
     crit_h1, crit_h2 = st.sidebar.columns(2)
     with crit_h1:
         critical_hour_start = st.number_input("Hora crítica inicio", value=10, min_value=0, max_value=23, step=1)
@@ -134,6 +149,26 @@ def _sidebar_state() -> AppState:
 
 def main() -> None:
     st.set_page_config(page_title="Carta Solar — Aleros Norte", layout="wide")
+    st.markdown(
+        """
+        <style>
+        section[data-testid="stSidebar"] {
+            width: 17rem !important;
+            min-width: 17rem !important;
+        }
+        section[data-testid="stSidebar"] > div {
+            width: 17rem !important;
+            min-width: 17rem !important;
+        }
+        .block-container {
+            padding-top: 1rem;
+            max-width: none;
+        }
+        [data-testid="stMetricValue"] { font-size: 1.35rem; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     st.title("Carta Solar — Aleros Norte")
     st.caption(f"{AUTHORS}  |  {INSTITUTION}")
 
@@ -148,7 +183,7 @@ def main() -> None:
 
     if calc or "figure" not in st.session_state:
         try:
-            base_config = build_config_from_state(state)
+            base_config = build_config_from_state(state, for_web=True)
             config = apply_computed_mask(base_config)
             fig = generate_carta_solar(config)
             depth = overhang_projection(config.effective_shading_height_m, config.mask_alt)
@@ -185,17 +220,22 @@ def main() -> None:
     m2.metric("Profundidad P (m)", f"{depth:.3f}")
     m3.metric("H eff (m)", f"{config.effective_shading_height_m:.2f}")
 
-    st.pyplot(fig, use_container_width=True)
+    side = (1.0 - CHART_WIDTH_RATIO) / 2.0
+    _, chart_col, _ = st.columns([side, CHART_WIDTH_RATIO, side])
+    with chart_col:
+        st.pyplot(fig, use_container_width=True, clear_figure=False)
 
-    png_bytes = figure_to_png_bytes(fig)
-    basename = build_output_basename(config)
-    st.download_button(
-        label="Descargar PNG",
-        data=png_bytes,
-        file_name=f"{basename}.png",
-        mime="image/png",
-        use_container_width=False,
-    )
+    _, btn_col, _ = st.columns([side, CHART_WIDTH_RATIO, side])
+    with btn_col:
+        png_bytes = figure_to_png_bytes(fig, dpi=EXPORT_DPI)
+        basename = build_output_basename(config)
+        st.download_button(
+            label="Descargar PNG",
+            data=png_bytes,
+            file_name=f"{basename}.png",
+            mime="image/png",
+            use_container_width=False,
+        )
 
     with st.expander("Informe de cobertura"):
         st.text(report)

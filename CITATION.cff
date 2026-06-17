@@ -1,0 +1,30 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+type: software
+title: "Carta Solar — Aleros Norte"
+version: 1.0.0
+date-released: 2026-06-16
+license: MIT
+authors:
+  - family-names: Barea
+    given-names: Gustavo
+    name-particle: Dr. Arq.
+    affiliation: "INAHE — CONICET"
+  - family-names: Ganem
+    given-names: Carolina
+    name-particle: Dra.
+    affiliation: "INAHE — CONICET"
+repository-code: "https://github.com/USUARIO/carta-solar"
+url: "https://github.com/USUARIO/carta-solar"
+doi: 10.5281/zenodo.XXXXXXX
+keywords:
+  - solar chart
+  - stereographic projection
+  - overhang
+  - shading
+  - architecture
+  - SOL-AR
+abstract: >
+  Herramienta para generar cartas solares estereográficas y dimensionar
+  aleros horizontales en fachada norte a partir del período crítico de
+  insolación y medidas en corte vertical.

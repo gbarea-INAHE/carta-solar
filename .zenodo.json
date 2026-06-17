@@ -1,0 +1,34 @@
+{
+  "title": "Carta Solar — Aleros Norte",
+  "description": "Generador de cartas solares estereográficas con transportador SOL-AR y cálculo de profundidad de alero horizontal en fachada norte.",
+  "upload_type": "software",
+  "publication_date": "2026-06-16",
+  "creators": [
+    {
+      "name": "Barea, Gustavo",
+      "affiliation": "INAHE — CONICET",
+      "orcid": ""
+    },
+    {
+      "name": "Ganem, Carolina",
+      "affiliation": "INAHE — CONICET",
+      "orcid": ""
+    }
+  ],
+  "keywords": [
+    "solar chart",
+    "stereographic projection",
+    "overhang",
+    "shading",
+    "architecture",
+    "SOL-AR"
+  ],
+  "license": {
+    "id": "MIT"
+  },
+  "communities": [
+    {
+      "identifier": "conicet"
+    }
+  ]
+}

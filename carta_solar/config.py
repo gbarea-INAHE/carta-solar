@@ -1,7 +1,14 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from carta_solar.critical import DEFAULT_CRITICAL_MONTHS
+from carta_solar.critical import (
+    DEFAULT_CRITICAL_MONTHS,
+    default_critical_months_for_lat,
+    facade_azimuth_for_lat,
+    facade_label_for_lat,
+)
+
+SITE_NAME_MAX_LEN = 80
 
 
 @dataclass
@@ -28,7 +35,18 @@ class CartaSolarConfig:
     def __post_init__(self) -> None:
         self.output_dir = Path(self.output_dir)
         self.critical_months = frozenset(self.critical_months)
+        self.site_name = self.site_name.strip()
+        if len(self.site_name) > SITE_NAME_MAX_LEN:
+            self.site_name = self.site_name[:SITE_NAME_MAX_LEN]
         self.validate()
+
+    @property
+    def facade_azimuth(self) -> float:
+        return facade_azimuth_for_lat(self.lat)
+
+    @property
+    def facade_label(self) -> str:
+        return facade_label_for_lat(self.lat)
 
     @property
     def effective_shading_height_m(self) -> float:
@@ -40,7 +58,7 @@ class CartaSolarConfig:
         return self.sill_height_m + self.window_height_m + self.gap_to_overhang_m
 
     def validate(self) -> None:
-        if not self.site_name.strip():
+        if not self.site_name:
             raise ValueError("El nombre del sitio no puede estar vacío.")
         if not -90 <= self.lat <= 90:
             raise ValueError("La latitud debe estar entre -90° y 90°.")
@@ -74,3 +92,9 @@ class CartaSolarConfig:
     @classmethod
     def default(cls) -> "CartaSolarConfig":
         return cls()
+
+    @classmethod
+    def for_latitude(cls, lat: float, **kwargs) -> "CartaSolarConfig":
+        """Config con meses críticos de verano local según hemisferio."""
+        months = kwargs.pop("critical_months", default_critical_months_for_lat(lat))
+        return cls(lat=lat, critical_months=months, **kwargs)

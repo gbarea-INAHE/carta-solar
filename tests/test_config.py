@@ -50,3 +50,19 @@ def test_rejects_negative_sill_height():
 def test_rejects_negative_gap_to_overhang():
     with pytest.raises(ValueError, match="vano"):
         CartaSolarConfig(gap_to_overhang_m=-0.1)
+
+
+def test_facade_from_latitude():
+    south = CartaSolarConfig(lat=-34.0)
+    north = CartaSolarConfig.for_latitude(40.0)
+    assert south.facade_azimuth == 0.0
+    assert south.facade_label == "Norte"
+    assert north.facade_azimuth == 180.0
+    assert north.facade_label == "Sur"
+    assert north.critical_months == frozenset({5, 6, 7, 8, 9})
+
+
+def test_site_name_truncated():
+    long_name = "A" * 120
+    config = CartaSolarConfig(site_name=long_name)
+    assert len(config.site_name) == 80

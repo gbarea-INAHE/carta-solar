@@ -7,17 +7,17 @@ Esta carpeta contiene capturas de pantalla del software para el README y materia
 | Archivo | Contenido esperado |
 | --- | --- |
 | `carta_solar.png` | Vista de la carta solar estereográfica (trayectorias, transportador, período crítico). |
-| `alero_norte.png` | Vista del diagrama en sección de fachada norte (ventana, alero, ángulo α y profundidad P). |
+| `alero_norte.png` | Vista del diagrama en sección de fachada ecuatorial (ventana, alero, ángulo α y profundidad P). |
 
-## Reemplazar placeholders
+## Regenerar capturas
 
-Los archivos `.png` actuales son **placeholders** generados automáticamente. Reemplazalos por capturas reales:
-
-1. Ejecutá la app (`python app.py` o `streamlit run streamlit_app.py`).
+1. Ejecutá la app (`python app.py` o `streamlit run streamlit_app.py`) o generá la figura con el núcleo Python.
 2. Configurá un caso representativo (por ejemplo, Ñacuñán).
 3. Exportá o capturá pantalla de la carta solar y de la sección.
 4. Guardá las imágenes con los mismos nombres en esta carpeta.
 5. Resolución sugerida: **1200–1600 px** de ancho, formato PNG.
+
+Las capturas actuales corresponden a v1.1.0 (marcadores Okabe–Ito y α por ángulo de perfil).
 
 ## Buenas prácticas
 

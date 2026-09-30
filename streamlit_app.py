@@ -1,4 +1,4 @@
-"""Versión web de Carta Solar — Aleros Norte (Streamlit)."""
+"""Versión web de Carta Solar — Aleros ecuatoriales (Streamlit)."""
 
 from __future__ import annotations
 
@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 import streamlit as st
 
 from carta_solar.branding import AUTHORS, CREDIT_LINE, INSTITUTION, available_logos
-from carta_solar.config import CartaSolarConfig
+from carta_solar.config import SITE_NAME_MAX_LEN, CartaSolarConfig
 from carta_solar.critical import (
     DEFAULT_CRITICAL_MONTHS,
     MONTH_NAMES,
-    collect_critical_samples,
-    compute_noon_alpha,
+    compute_required_alpha,
+    default_critical_months_for_lat,
+    facade_label_for_lat,
     format_exposure_report,
 )
 from carta_solar.overhang import apply_computed_mask, overhang_projection
@@ -97,42 +98,81 @@ def _default_state() -> AppState:
 
 def _sidebar_state() -> AppState:
     st.sidebar.header("Ubicación")
-    site_name = st.sidebar.text_input("Nombre del sitio", value="Ñacuñán")
-    lat = st.sidebar.number_input("Latitud (Sur = −)", value=-34.0333, format="%.4f")
-    lon = st.sidebar.number_input("Longitud (Oeste = −)", value=-67.9167, format="%.4f")
+    site_name = st.sidebar.text_input(
+        "Nombre del sitio",
+        value="Ñacuñán",
+        max_chars=SITE_NAME_MAX_LEN,
+    )
+    lat = st.sidebar.number_input(
+        "Latitud (Sur = −)",
+        value=-34.0333,
+        min_value=-90.0,
+        max_value=90.0,
+        format="%.4f",
+    )
+    lon = st.sidebar.number_input(
+        "Longitud (Oeste = −)",
+        value=-67.9167,
+        min_value=-180.0,
+        max_value=180.0,
+        format="%.4f",
+        help="Solo metadatos / referencia; el cálculo usa horas solares.",
+    )
+    facade = facade_label_for_lat(float(lat))
+    st.sidebar.caption(f"Fachada ecuatorial automática: **{facade}**")
 
     st.sidebar.header("Medidas en corte (m)")
-    sill_height_m = st.sidebar.number_input("Antepecho (piso → ventana)", value=0.9, min_value=0.0, step=0.05)
-    window_height_m = st.sidebar.number_input("Altura ventana", value=1.2, min_value=0.01, step=0.05)
-    gap_to_overhang_m = st.sidebar.number_input("Vano (cierre ventana → alero)", value=0.3, min_value=0.0, step=0.05)
+    sill_height_m = st.sidebar.number_input(
+        "Antepecho (piso → ventana)", value=0.9, min_value=0.0, step=0.05
+    )
+    window_height_m = st.sidebar.number_input(
+        "Altura ventana", value=1.2, min_value=0.01, step=0.05
+    )
+    gap_to_overhang_m = st.sidebar.number_input(
+        "Vano (cierre ventana → alero)", value=0.3, min_value=0.0, step=0.05
+    )
 
+    default_months = sorted(default_critical_months_for_lat(float(lat)))
     st.sidebar.header("Período crítico")
+    st.sidebar.caption(
+        f"Verano local sugerido: {', '.join(MONTH_NAMES[m] for m in default_months)}"
+    )
     month_options = st.sidebar.multiselect(
         "Meses críticos",
         options=list(range(1, 13)),
-        default=sorted(DEFAULT_CRITICAL_MONTHS),
+        default=default_months,
         format_func=lambda m: MONTH_NAMES[m],
     )
     selected_months = set(month_options)
     crit_h1, crit_h2 = st.sidebar.columns(2)
     with crit_h1:
-        critical_hour_start = st.number_input("Hora crítica inicio", value=10, min_value=0, max_value=23, step=1)
+        critical_hour_start = st.number_input(
+            "Hora crítica inicio", value=10, min_value=0, max_value=23, step=1
+        )
     with crit_h2:
-        critical_hour_end = st.number_input("Hora crítica fin", value=18, min_value=1, max_value=23, step=1)
-    highlight_critical_period = st.sidebar.checkbox("Resaltar período crítico en carta", value=True)
+        critical_hour_end = st.number_input(
+            "Hora crítica fin", value=18, min_value=1, max_value=23, step=1
+        )
+    highlight_critical_period = st.sidebar.checkbox(
+        "Resaltar período crítico en carta", value=True
+    )
 
     st.sidebar.header("Carta")
     h1, h2 = st.sidebar.columns(2)
     with h1:
-        hour_start = st.number_input("Hora inicio (líneas)", value=5, min_value=0, max_value=23, step=1)
+        hour_start = st.number_input(
+            "Hora inicio (líneas)", value=5, min_value=0, max_value=23, step=1
+        )
     with h2:
-        hour_end = st.number_input("Hora fin (líneas)", value=19, min_value=1, max_value=23, step=1)
+        hour_end = st.number_input(
+            "Hora fin (líneas)", value=19, min_value=1, max_value=23, step=1
+        )
 
     if not selected_months:
-        selected_months = set(DEFAULT_CRITICAL_MONTHS)
+        selected_months = set(default_critical_months_for_lat(float(lat)))
 
     return AppState(
-        site_name=site_name.strip() or "Sitio",
+        site_name=(site_name.strip() or "Sitio")[:SITE_NAME_MAX_LEN],
         lat=float(lat),
         lon=float(lon),
         sill_height_m=float(sill_height_m),
@@ -147,8 +187,14 @@ def _sidebar_state() -> AppState:
     )
 
 
+def _close_previous_figure() -> None:
+    prev = st.session_state.get("figure")
+    if prev is not None:
+        plt.close(prev)
+
+
 def main() -> None:
-    st.set_page_config(page_title="Carta Solar — Aleros Norte", layout="wide")
+    st.set_page_config(page_title="Carta Solar — Aleros", layout="wide")
     st.markdown(
         """
         <style>
@@ -169,7 +215,7 @@ def main() -> None:
         """,
         unsafe_allow_html=True,
     )
-    st.title("Carta Solar — Aleros Norte")
+    st.title("Carta Solar — Aleros ecuatoriales")
     st.caption(f"{AUTHORS}  |  {INSTITUTION}")
 
     logos = available_logos()
@@ -185,25 +231,36 @@ def main() -> None:
         try:
             base_config = build_config_from_state(state, for_web=True)
             config = apply_computed_mask(base_config)
+            _close_previous_figure()
             fig = generate_carta_solar(config)
-            depth = overhang_projection(config.effective_shading_height_m, config.mask_alt)
-            samples = collect_critical_samples(
+            depth = overhang_projection(
+                config.effective_shading_height_m, config.mask_alt
+            )
+            _, samples, limiting_month = compute_required_alpha(
                 config.lat,
                 config.critical_months,
                 config.critical_hour_start,
                 config.critical_hour_end,
+                facade_az=config.facade_azimuth,
             )
-            _, noon_month = compute_noon_alpha(config.lat, config.critical_months)
-            report = format_exposure_report(samples, config.mask_alt, noon_month=noon_month)
+            report = format_exposure_report(
+                samples,
+                config.mask_alt,
+                limiting_month=limiting_month,
+                facade_az=config.facade_azimuth,
+            )
+            png_bytes = figure_to_png_bytes(fig, dpi=EXPORT_DPI)
             st.session_state["figure"] = fig
             st.session_state["config"] = config
             st.session_state["depth"] = depth
             st.session_state["report"] = report
+            st.session_state["png_bytes"] = png_bytes
+            st.session_state["png_name"] = f"{build_output_basename(config)}.png"
         except ValueError as exc:
             st.error(str(exc))
             return
-        except Exception as exc:
-            st.error(f"No se pudo calcular el alero: {exc}")
+        except Exception:
+            st.error("No se pudo calcular el alero. Revisá los parámetros e intentá de nuevo.")
             return
 
     if "figure" not in st.session_state:
@@ -215,10 +272,11 @@ def main() -> None:
     depth: float = st.session_state["depth"]
     report: str = st.session_state["report"]
 
-    m1, m2, m3 = st.columns(3)
+    m1, m2, m3, m4 = st.columns(4)
     m1.metric("Ángulo α (°)", f"{config.mask_alt:.1f}")
     m2.metric("Profundidad P (m)", f"{depth:.3f}")
     m3.metric("H eff (m)", f"{config.effective_shading_height_m:.2f}")
+    m4.metric("Fachada", config.facade_label)
 
     side = (1.0 - CHART_WIDTH_RATIO) / 2.0
     _, chart_col, _ = st.columns([side, CHART_WIDTH_RATIO, side])
@@ -227,12 +285,15 @@ def main() -> None:
 
     _, btn_col, _ = st.columns([side, CHART_WIDTH_RATIO, side])
     with btn_col:
-        png_bytes = figure_to_png_bytes(fig, dpi=EXPORT_DPI)
-        basename = build_output_basename(config)
+        png_bytes = st.session_state.get("png_bytes")
+        if png_bytes is None:
+            png_bytes = figure_to_png_bytes(fig, dpi=EXPORT_DPI)
+            st.session_state["png_bytes"] = png_bytes
+        basename = st.session_state.get("png_name") or f"{build_output_basename(config)}.png"
         st.download_button(
             label="Descargar PNG",
             data=png_bytes,
-            file_name=f"{basename}.png",
+            file_name=basename,
             mime="image/png",
             use_container_width=False,
         )

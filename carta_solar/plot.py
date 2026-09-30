@@ -10,7 +10,7 @@ from carta_solar.annotations import (
 )
 from carta_solar.branding import add_figure_credit
 from carta_solar.config import CartaSolarConfig
-from carta_solar.format_utils import site_slug
+from carta_solar.format_utils import format_lat_lon, site_slug
 from carta_solar.mask import draw_protractor
 from carta_solar.solar import r_from_alt, solar_alt_az, xy_from_alt_az
 
@@ -129,6 +129,7 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
             config.mask_alt,
             show_grid=config.show_protractor_grid,
             protractor_step=config.protractor_step,
+            facade_az=config.facade_azimuth,
         )
 
     hours = np.linspace(4, 20, 481)
@@ -217,6 +218,18 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
 
     for x, y, label in hour_label_points:
         _place_chart_label(ax, x, y, label, fontsize=9)
+
+    lat_str, lon_str = format_lat_lon(config.lat, config.lon)
+    ax.text(
+        0.0,
+        -1.22,
+        f"{config.site_name}  ·  {lat_str}  {lon_str} (metadatos)  ·  fachada {config.facade_label}",
+        ha="center",
+        va="top",
+        fontsize=7,
+        color="#444444",
+        zorder=Z_LABEL,
+    )
 
     ax.set_xlim(-1.30, 1.30)
     ax.set_ylim(-1.30, 1.30)

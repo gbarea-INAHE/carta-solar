@@ -10,12 +10,13 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 from carta_solar.branding import AUTHORS, CREDIT_LINE, INSTITUTION, available_logos
-from carta_solar.config import CartaSolarConfig
+from carta_solar.config import SITE_NAME_MAX_LEN, CartaSolarConfig
 from carta_solar.critical import (
     DEFAULT_CRITICAL_MONTHS,
     MONTH_NAMES,
-    collect_critical_samples,
-    compute_noon_alpha,
+    compute_required_alpha,
+    default_critical_months_for_lat,
+    facade_label_for_lat,
     format_exposure_report,
 )
 from carta_solar.overhang import apply_computed_mask, overhang_projection
@@ -30,7 +31,7 @@ from carta_solar.plot import (
 class CartaSolarApp(tk.Tk):
     def __init__(self) -> None:
         super().__init__()
-        self.title("Carta Solar — Aleros Norte")
+        self.title("Carta Solar — Aleros ecuatoriales")
         self.geometry("1320x860")
         self.minsize(1150, 750)
 
@@ -80,12 +81,17 @@ class CartaSolarApp(tk.Tk):
         for label, var in [
             ("Nombre del sitio", self.site_name_var),
             ("Latitud (Sur = −)", self.lat_var),
-            ("Longitud (Oeste = −)", self.lon_var),
+            ("Longitud (metadatos, O = −)", self.lon_var),
         ]:
             row = ttk.Frame(loc)
             row.pack(fill=tk.X, pady=2)
             ttk.Label(row, text=label, width=22).pack(side=tk.LEFT)
             ttk.Entry(row, textvariable=var, width=12).pack(side=tk.LEFT, fill=tk.X, expand=True)
+        self.facade_hint_var = tk.StringVar(value="Fachada: Norte")
+        ttk.Label(loc, textvariable=self.facade_hint_var, font=("Segoe UI", 8)).pack(
+            anchor=tk.W, pady=(4, 0)
+        )
+        self.lat_var.trace_add("write", lambda *_: self._update_facade_hint())
 
         measures = ttk.LabelFrame(form_frame, text="Medidas en corte (m)", padding=8)
         measures.pack(fill=tk.X, pady=(0, 8))
@@ -111,7 +117,7 @@ class CartaSolarApp(tk.Tk):
             ttk.Label(row, textvariable=var, font=("Segoe UI", 9, "bold")).pack(side=tk.LEFT)
         ttk.Label(
             results,
-            text="P = (h_v + h_g) / tan(α)  |  α = altitud al mediodía solar (mes más bajo)",
+            text="P = (h_v + h_g) / tan(α)  |  α = mín. ángulo de perfil ε del período crítico",
             font=("Segoe UI", 8),
             wraplength=300,
         ).pack(anchor=tk.W, pady=(4, 0))
@@ -191,8 +197,19 @@ class CartaSolarApp(tk.Tk):
         ).pack(anchor=tk.W)
 
         self._build_authorship_block(form_frame)
+        self._update_facade_hint()
 
         self.after(100, self.calculate_overhang)
+
+    def _update_facade_hint(self) -> None:
+        try:
+            lat = float(self.lat_var.get().strip().replace(",", "."))
+            label = facade_label_for_lat(lat)
+            months = default_critical_months_for_lat(lat)
+            month_txt = ", ".join(MONTH_NAMES[m] for m in sorted(months))
+            self.facade_hint_var.set(f"Fachada: {label}  ·  verano local: {month_txt}")
+        except ValueError:
+            self.facade_hint_var.set("Fachada: —")
 
     def _build_authorship_block(self, parent: ttk.Frame) -> None:
         credit = ttk.LabelFrame(parent, text="Autoría", padding=8)
@@ -251,8 +268,9 @@ class CartaSolarApp(tk.Tk):
         return frozenset(m for m, var in self._month_vars.items() if var.get())
 
     def _parse_config(self) -> CartaSolarConfig:
+        site = self.site_name_var.get().strip()[:SITE_NAME_MAX_LEN]
         return CartaSolarConfig(
-            site_name=self.site_name_var.get().strip(),
+            site_name=site,
             lat=float(self.lat_var.get().strip().replace(",", ".")),
             lon=float(self.lon_var.get().strip().replace(",", ".")),
             hour_start=int(self.hour_start_var.get().strip()),
@@ -280,17 +298,18 @@ class CartaSolarApp(tk.Tk):
         self.overhang_depth_var.set(f"{depth:.3f}")
 
     def _update_report(self, config: CartaSolarConfig) -> None:
-        samples = collect_critical_samples(
+        _, samples, limiting_month = compute_required_alpha(
             config.lat,
             config.critical_months,
             config.critical_hour_start,
             config.critical_hour_end,
+            facade_az=config.facade_azimuth,
         )
-        noon_month: int | None = None
-        if config.mask_alt is not None:
-            _, noon_month = compute_noon_alpha(config.lat, config.critical_months)
         text = format_exposure_report(
-            samples, config.mask_alt, noon_month=noon_month
+            samples,
+            config.mask_alt,
+            limiting_month=limiting_month,
+            facade_az=config.facade_azimuth,
         )
         self.report_text.configure(state=tk.NORMAL)
         self.report_text.delete("1.0", tk.END)
@@ -298,6 +317,8 @@ class CartaSolarApp(tk.Tk):
         self.report_text.configure(state=tk.DISABLED)
 
     def _render_figure(self, figure: plt.Figure) -> None:
+        if self._figure is not None:
+            plt.close(self._figure)
         if self._canvas is not None:
             self._canvas.get_tk_widget().destroy()
         if self._toolbar is not None:

@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import math
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.axes import Axes
 from matplotlib.path import Path as MplPath
@@ -16,15 +15,18 @@ from carta_solar.critical import (
     MONTH_TO_DAY_OF_YEAR,
     collect_critical_samples,
     find_unprotected_samples,
-    is_in_northern_sector,
+    is_in_equatorial_sector,
 )
 from carta_solar.overhang import overhang_projection
 from carta_solar.solar import solar_alt_az, xy_from_alt_az
 
 CRITICAL_PATH_COLOR = "#CC0000"
 CRITICAL_PATH_WIDTH = 2.2
-EXPOSED_MARKER_COLOR = "#FF2200"
-PROTECTED_MARKER_COLOR = "#228822"
+# Okabe–Ito (colorblind-safe): vermillion / bluish green
+EXPOSED_MARKER_COLOR = "#D55E00"
+PROTECTED_MARKER_COLOR = "#009E73"
+EXPOSED_MARKER = "x"
+PROTECTED_MARKER = "o"
 CRITICAL_MONTH_FILL = "#87CEEB"
 CRITICAL_MONTH_FILL_ALPHA = 0.28
 CRITICAL_MONTH_PATH_COLOR = "#4DA6D9"
@@ -34,6 +36,7 @@ def draw_section_diagram(ax: Axes, config: CartaSolarConfig) -> None:
     """Corte vertical: antepecho, ventana, vano y alero con cotas reales."""
     ax.set_aspect("equal", adjustable="box")
     ax.axis("off")
+    facade_title = f"Sección — fachada {config.facade_label}"
 
     h_s = config.sill_height_m
     h_v = config.window_height_m
@@ -46,7 +49,7 @@ def draw_section_diagram(ax: Axes, config: CartaSolarConfig) -> None:
         ax.set_xlim(-0.2, 2.5)
         ax.set_ylim(-0.2, max(y_overhang + 0.5, 2.0))
         ax.text(0.5, 0.5, "Calcular alero", ha="center", va="center", fontsize=11, color="#666666")
-        ax.set_title("Sección — fachada Norte", fontsize=10, pad=8)
+        ax.set_title(facade_title, fontsize=10, pad=8)
         return
 
     alpha = config.mask_alt
@@ -151,11 +154,12 @@ def draw_section_diagram(ax: Axes, config: CartaSolarConfig) -> None:
         fontsize=9,
         color="#CC0000",
     )
-    ax.set_title("Sección — fachada Norte", fontsize=10, pad=8)
+    ax.set_title(facade_title, fontsize=10, pad=8)
 
 
 def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
     """Rellena en celeste translúcido las trayectorias de los meses a sombrear."""
+    facade_az = config.facade_azimuth
     hours = np.linspace(4, 20, 241)
     for month in sorted(config.critical_months):
         day = MONTH_TO_DAY_OF_YEAR[month]
@@ -165,7 +169,7 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
-            if is_in_northern_sector(az, y):
+            if is_in_equatorial_sector(az, y, facade_az):
                 path_points.append((x, y))
 
         if len(path_points) < 2:
@@ -185,9 +189,9 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
         )
         ax.add_patch(patch)
 
-        alt_noon, _ = solar_alt_az(config.lat, day, 12.0)
+        alt_noon, az_noon = solar_alt_az(config.lat, day, 12.0)
         if alt_noon > 0:
-            x_n, y_n = xy_from_alt_az(alt_noon, 0.0)
+            x_n, y_n = xy_from_alt_az(alt_noon, az_noon)
             ax.plot(
                 x_n,
                 y_n,
@@ -218,18 +222,22 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
     if not config.highlight_critical_period:
         return
 
+    facade_az = config.facade_azimuth
     samples = collect_critical_samples(
         config.lat,
         config.critical_months,
         config.critical_hour_start,
         config.critical_hour_end,
+        facade_az=facade_az,
     )
     if not samples:
         return
 
     unprotected = {
         (s.month, round(s.hour, 2))
-        for s in find_unprotected_samples(samples, config.mask_alt)
+        for s in find_unprotected_samples(
+            samples, config.mask_alt, facade_az=facade_az
+        )
     }
 
     hours = np.arange(config.critical_hour_start, config.critical_hour_end + 0.01, 0.25)
@@ -241,22 +249,47 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
-            if is_in_northern_sector(az, y):
+            if is_in_equatorial_sector(az, y, facade_az):
                 xs.append(x)
                 ys.append(y)
         if len(xs) >= 2:
-            ax.plot(xs, ys, color=CRITICAL_PATH_COLOR, linewidth=CRITICAL_PATH_WIDTH, zorder=4, alpha=0.85)
+            ax.plot(
+                xs,
+                ys,
+                color=CRITICAL_PATH_COLOR,
+                linewidth=CRITICAL_PATH_WIDTH,
+                zorder=4,
+                alpha=0.85,
+            )
 
     for sample in samples:
         key = (sample.month, round(sample.hour, 2))
-        color = EXPOSED_MARKER_COLOR if key in unprotected else PROTECTED_MARKER_COLOR
+        exposed = key in unprotected
         ax.plot(
             sample.x,
             sample.y,
-            marker="o",
-            markersize=3.5,
-            color=color,
+            marker=EXPOSED_MARKER if exposed else PROTECTED_MARKER,
+            markersize=4.0 if exposed else 3.5,
+            color=EXPOSED_MARKER_COLOR if exposed else PROTECTED_MARKER_COLOR,
             linestyle="none",
             zorder=5,
             alpha=0.9,
         )
+
+    ax.plot(
+        [],
+        [],
+        marker=PROTECTED_MARKER,
+        color=PROTECTED_MARKER_COLOR,
+        linestyle="none",
+        label="Protegido",
+    )
+    ax.plot(
+        [],
+        [],
+        marker=EXPOSED_MARKER,
+        color=EXPOSED_MARKER_COLOR,
+        linestyle="none",
+        label="Expuesto",
+    )
+    ax.legend(loc="lower left", fontsize=7, framealpha=0.9)

@@ -58,3 +58,11 @@ def test_shaded_region_has_positive_area():
     y = vertices[:, 1]
     area = 0.5 * abs(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))
     assert area > 0.1
+
+
+def test_shaded_region_south_facade_mirrored():
+    north = build_shaded_region_vertices(55.0, facade_az=0.0)
+    south = build_shaded_region_vertices(55.0, facade_az=180.0)
+    assert np.all(south[:, 1] <= 1e-9)
+    assert np.allclose(south[:, 0], north[:, 0])
+    assert np.allclose(south[:, 1], -north[:, 1])

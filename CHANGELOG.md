@@ -22,6 +22,7 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
 ### Notes
 
+- DOI de versión Zenodo: [10.5281/zenodo.23050230](https://doi.org/10.5281/zenodo.23050230).
 - Próximamente: louvres horizontales y obstrucciones del entorno.
 
 ## [1.1.1] - 2026-09-30

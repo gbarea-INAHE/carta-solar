@@ -19,6 +19,7 @@ Incluye interfaz web (Streamlit) y de escritorio (tkinter; alero).
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |
 | **DOI Zenodo (concepto)** | [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118) |
+| **DOI Zenodo (v1.2.0)** | [10.5281/zenodo.23050230](https://doi.org/10.5281/zenodo.23050230) |
 
 **Repositorio:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
 
@@ -48,7 +49,7 @@ python app.py
 
 ## Cómo citar
 
-> Barea, G., & Ganem, C. (2026). *Carta Solar — Parasoles* (Version 1.2.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725118
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Parasoles* (Version 1.2.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.23050230
 
 ```bibtex
 @software{barea2026carta_solar,
@@ -57,8 +58,8 @@ python app.py
   year         = {2026},
   publisher    = {Zenodo},
   version      = {1.2.0},
-  doi          = {10.5281/zenodo.20725118},
-  url          = {https://doi.org/10.5281/zenodo.20725118}
+  doi          = {10.5281/zenodo.23050230},
+  url          = {https://doi.org/10.5281/zenodo.23050230}
 }
 ```
 

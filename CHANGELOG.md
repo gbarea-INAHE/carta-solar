@@ -5,6 +5,13 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [Unreleased]
+
+### Fixed
+
+- Streamlit: la carta se regenera al cambiar parámetros del formulario
+  (antes quedaba congelada en `session_state` hasta pulsar el botón).
+
 ## [1.1.0] - 2026-09-30
 
 ### Added

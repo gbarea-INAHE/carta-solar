@@ -2,7 +2,15 @@ import matplotlib
 
 matplotlib.use("Agg")
 
-from streamlit_app import AppState, build_config_from_state, figure_to_png_bytes, _default_state
+from dataclasses import replace
+
+from streamlit_app import (
+    AppState,
+    build_config_from_state,
+    figure_to_png_bytes,
+    should_recalculate,
+    _default_state,
+)
 from carta_solar.overhang import apply_computed_mask
 from carta_solar.plot import generate_carta_solar
 
@@ -73,3 +81,20 @@ def test_generate_figure_northern_hemisphere():
     assert 0 < config.mask_alt < 90
     fig = generate_carta_solar(config)
     assert len(fig.axes) == 2
+
+
+def test_should_recalculate_on_first_render():
+    state = _default_state()
+    assert should_recalculate(state, None, has_figure=False) is True
+
+
+def test_should_recalculate_when_inputs_change():
+    state = _default_state()
+    changed = replace(state, lat=-30.0)
+    assert should_recalculate(changed, state, has_figure=True) is True
+    assert should_recalculate(state, state, has_figure=True) is False
+
+
+def test_should_recalculate_on_force_button():
+    state = _default_state()
+    assert should_recalculate(state, state, force=True, has_figure=True) is True

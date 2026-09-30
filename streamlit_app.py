@@ -193,6 +193,19 @@ def _close_previous_figure() -> None:
         plt.close(prev)
 
 
+def should_recalculate(
+    state: AppState,
+    previous_state: AppState | None,
+    *,
+    force: bool = False,
+    has_figure: bool = False,
+) -> bool:
+    """True si hay que regenerar la carta (primer render, botón o inputs nuevos)."""
+    if force or not has_figure:
+        return True
+    return previous_state != state
+
+
 def main() -> None:
     st.set_page_config(page_title="Carta Solar — Aleros", layout="wide")
     st.markdown(
@@ -226,8 +239,15 @@ def main() -> None:
 
     state = _sidebar_state()
     calc = st.sidebar.button("Calcular alero", type="primary", use_container_width=True)
+    previous_state: AppState | None = st.session_state.get("app_state")
+    needs_recalc = should_recalculate(
+        state,
+        previous_state,
+        force=calc,
+        has_figure="figure" in st.session_state,
+    )
 
-    if calc or "figure" not in st.session_state:
+    if needs_recalc:
         try:
             base_config = build_config_from_state(state, for_web=True)
             config = apply_computed_mask(base_config)
@@ -256,6 +276,7 @@ def main() -> None:
             st.session_state["report"] = report
             st.session_state["png_bytes"] = png_bytes
             st.session_state["png_name"] = f"{build_output_basename(config)}.png"
+            st.session_state["app_state"] = state
         except ValueError as exc:
             st.error(str(exc))
             return
@@ -264,7 +285,7 @@ def main() -> None:
             return
 
     if "figure" not in st.session_state:
-        st.info("Completá los parámetros en la barra lateral y pulsá **Calcular alero**.")
+        st.info("Completá los parámetros en la barra lateral; la carta se actualiza al cambiarlos.")
         return
 
     config: CartaSolarConfig = st.session_state["config"]

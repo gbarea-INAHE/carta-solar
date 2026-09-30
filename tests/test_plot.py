@@ -43,6 +43,12 @@ def test_section_panel_not_overlapping_solar_chart():
     assert ax_solar.bbox.x1 <= ax_section.bbox.x0
 
 
+def test_section_title_south_facade():
+    config = CartaSolarConfig.for_latitude(40.0, mask_alt=55)
+    figure = generate_carta_solar(config)
+    assert figure.axes[1].get_title() == "Sección — fachada Sur"
+
+
 def test_protractor_draws_red_grid_and_gray_active_line():
     config = CartaSolarConfig(mask_alt=55)
     figure = generate_carta_solar(config)

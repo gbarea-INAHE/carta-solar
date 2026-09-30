@@ -3,7 +3,7 @@ import math
 import pytest
 
 from carta_solar.config import CartaSolarConfig
-from carta_solar.critical import compute_noon_alpha, DEFAULT_CRITICAL_MONTHS
+from carta_solar.critical import DEFAULT_CRITICAL_MONTHS, compute_noon_alpha
 from carta_solar.overhang import (
     apply_computed_mask,
     compute_overhang_from_config,
@@ -61,3 +61,30 @@ def test_apply_computed_mask_sets_mask_alt():
     updated = apply_computed_mask(config)
     assert updated.mask_alt is not None
     assert 50 <= updated.mask_alt <= 60
+
+
+def test_apply_computed_mask_preserves_fields():
+    config = CartaSolarConfig(
+        lat=-34.0333,
+        site_name="Test",
+        window_height_m=1.1,
+        highlight_critical_period=False,
+    )
+    updated = apply_computed_mask(config)
+    assert updated.site_name == "Test"
+    assert updated.window_height_m == 1.1
+    assert updated.highlight_critical_period is False
+
+
+def test_northern_hemisphere_overhang():
+    config = CartaSolarConfig.for_latitude(
+        40.0,
+        sill_height_m=0.9,
+        window_height_m=1.2,
+        gap_to_overhang_m=0.3,
+    )
+    assert config.facade_label == "Sur"
+    alpha, projection, month = compute_overhang_from_config(config)
+    assert 0 < alpha < 90
+    assert projection > 0
+    assert month in config.critical_months

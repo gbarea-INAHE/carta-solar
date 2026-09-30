@@ -1,9 +1,9 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "Carta Solar — Aleros Norte"
-version: 1.0.4
-date-released: 2026-06-17
+title: "Carta Solar — Aleros"
+version: 1.1.0
+date-released: 2026-09-30
 license: MIT
 authors:
   - family-names: Barea
@@ -31,6 +31,8 @@ keywords:
   - bioclimatic design
 abstract: >
   Herramienta para generar cartas solares estereográficas y dimensionar
-  aleros horizontales en fachada norte a partir del período crítico de
-  insolación y medidas en corte vertical. Incluye interfaz de escritorio
-  (tkinter) y versión web (Streamlit).
+  aleros horizontales en fachada ecuatorial (norte en hemisferio sur, sur
+  en hemisferio norte) a partir del período crítico de insolación y medidas
+  en corte vertical. El ángulo α de diseño es el mínimo ángulo de perfil ε
+  del período crítico. Incluye interfaz de escritorio (tkinter) y versión
+  web (Streamlit).

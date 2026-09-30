@@ -6,9 +6,11 @@ Cada curva de ángulo α NO es un círculo de altitud ni alt = α×cos(δ).
 Es un arco de circunferencia en el plano de proyección que:
 
   1. Pasa por Oeste (-1, 0) y Este (1, 0) en el horizonte.
-  2. Corta el meridiano Norte en (0, r(α)), con r(α) = tan((90°-α)/2).
+  2. Corta el meridiano de la fachada ecuatorial en (0, ±r(α)),
+     con r(α) = tan((90°-α)/2). Para fachada Sur se refleja por el
+     diámetro E–O (y → −y).
 
-Así las curvas α=10°, 20°, … coinciden en el eje Norte con la grilla de
+Así las curvas α=10°, 20°, … coinciden en el eje de fachada con la grilla de
 altitud (equidistantes en grados) y no se deforman al acercarse al cenit.
 """
 
@@ -37,11 +39,15 @@ WEST = (-1.0, 0.0)
 EAST = (1.0, 0.0)
 
 
+def _y_sign(facade_az: float) -> float:
+    """+1 fachada Norte, −1 fachada Sur."""
+    return -1.0 if (facade_az % 360.0) == 180.0 else 1.0
+
+
 def circle_params_for_alpha(alpha: float) -> tuple[float, float, float]:
     """
-    Centro (0, y_c), radio R y cota norte h de la circunferencia del arco α.
-
-    La circunferencia pasa por O, E y (0, h) con h = r_from_alt(α).
+    Centro (0, y_c), radio R y cota de pico h de la circunferencia del arco α
+    en coordenadas de fachada Norte (pico en +y).
     """
     h = r_from_alt(alpha)
     if h <= 0:
@@ -56,8 +62,9 @@ def alpha_curve_points(
     alpha: float,
     *,
     num_points: int = CURVE_SAMPLE_POINTS,
+    facade_az: float = 0.0,
 ) -> np.ndarray:
-    """Arco superior de la circunferencia del transportador (O → N → E)."""
+    """Arco del transportador O → pico ecuatorial → E (reflejado si fachada Sur)."""
     y_c, radius, _ = circle_params_for_alpha(alpha)
 
     theta_w = float(np.arctan2(-y_c, -1.0))
@@ -65,7 +72,7 @@ def alpha_curve_points(
 
     thetas = np.linspace(theta_w, theta_e, num_points)
     x = radius * np.cos(thetas)
-    y = y_c + radius * np.sin(thetas)
+    y = (y_c + radius * np.sin(thetas)) * _y_sign(facade_az)
     return np.column_stack([x, y])
 
 
@@ -73,17 +80,24 @@ def build_shaded_region_vertices(
     alpha: float,
     *,
     num_points: int = CURVE_SAMPLE_POINTS,
+    facade_az: float = 0.0,
 ) -> np.ndarray:
     """Polígono cerrado: arco α + diámetro horizontal E → O (y = 0)."""
-    curve = alpha_curve_points(alpha, num_points=num_points)
+    curve = alpha_curve_points(alpha, num_points=num_points, facade_az=facade_az)
     diameter = np.array([EAST, WEST])
     return np.vstack([curve, diameter])
 
 
 def north_peak_y(alpha: float) -> float:
-    """Cota y donde el arco α corta el meridiano Norte."""
+    """Cota y donde el arco α corta el meridiano Norte (fachada Norte)."""
     _, _, h = circle_params_for_alpha(alpha)
     return h
+
+
+def facade_peak_xy(alpha: float, facade_az: float = 0.0) -> tuple[float, float]:
+    """Punto donde el arco α corta el meridiano de la fachada."""
+    h = north_peak_y(alpha)
+    return 0.0, h * _y_sign(facade_az)
 
 
 def draw_protractor_grid(
@@ -94,11 +108,12 @@ def draw_protractor_grid(
     alpha_max: int = 80,
     color: str = GRID_COLOR,
     linewidth: float = GRID_LINEWIDTH,
+    facade_az: float = 0.0,
 ) -> list:
     """Rejilla roja: arcos circulares α = 10°, 20°, … 80°."""
     lines = []
     for alpha in range(alpha_min, alpha_max + 1, step):
-        points = alpha_curve_points(float(alpha))
+        points = alpha_curve_points(float(alpha), facade_az=facade_az)
         (line,) = ax.plot(
             points[:, 0],
             points[:, 1],
@@ -118,9 +133,10 @@ def draw_alpha_mask(
     line_width: float = ACTIVE_LINEWIDTH,
     fill_color: str = FILL_COLOR,
     fill_alpha: float = FILL_ALPHA,
+    facade_az: float = 0.0,
 ) -> tuple[PathPatch, object]:
     """Curva α activa (gris) y relleno semitransparente bajo el arco."""
-    vertices = build_shaded_region_vertices(alpha)
+    vertices = build_shaded_region_vertices(alpha, facade_az=facade_az)
     patch = PathPatch(
         Path(vertices),
         facecolor=fill_color,
@@ -130,7 +146,7 @@ def draw_alpha_mask(
     )
     ax.add_patch(patch)
 
-    curve = alpha_curve_points(alpha)
+    curve = alpha_curve_points(alpha, facade_az=facade_az)
     (line,) = ax.plot(
         curve[:, 0],
         curve[:, 1],
@@ -159,6 +175,7 @@ def draw_protractor(
     *,
     show_grid: bool = True,
     protractor_step: int = 10,
+    facade_az: float = 0.0,
 ) -> None:
     """Orquestador del transportador SOL-AR."""
     if mask_alt is None:
@@ -166,5 +183,5 @@ def draw_protractor(
 
     draw_ew_diameter(ax)
     if show_grid:
-        draw_protractor_grid(ax, step=protractor_step)
-    draw_alpha_mask(ax, mask_alt)
+        draw_protractor_grid(ax, step=protractor_step, facade_az=facade_az)
+    draw_alpha_mask(ax, mask_alt, facade_az=facade_az)

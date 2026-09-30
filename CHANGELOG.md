@@ -5,6 +5,32 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.1.0] - 2026-09-30
+
+### Fixed
+
+- Criterio de sombreado invertido en `is_point_shaded_by_alpha`: el informe y los
+  marcadores ahora coinciden con la máscara SOL-AR y la física del alero
+  (Ñacuñán verano: 65/65 cubierto).
+- Fuga de memoria en Streamlit/tkinter: se cierra la figura previa al recalcular
+  y el PNG de descarga se cachea en `session_state`.
+
+### Changed
+
+- α de diseño = mínimo ángulo de perfil ε sobre el período crítico
+  (`compute_required_alpha`), no la altitud de mediodía.
+- `apply_computed_mask` usa `dataclasses.replace`.
+- Marcadores expuesto/protegido con paleta Okabe–Ito y formas distintas (× / ○).
+- Dependencias fijadas en `requirements.txt`.
+- Documentación y capturas regeneradas; `.gitignore` permite `docs/*.png`.
+
+### Added
+
+- Soporte de fachada ecuatorial: Norte (HS) / Sur (HN) según signo de latitud,
+  con transportador reflejado y meses de verano local por defecto.
+- `profile_angle`, `alt_az_from_xy` y validaciones de UI (lat/lon, nombre de sitio).
+- Longitud mostrada en la carta como metadatos (no entra en el cálculo solar).
+
 ## [1.0.4] - 2026-06-17
 
 ### Added
@@ -53,6 +79,7 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 - Interfaz web (`streamlit_app.py`, Streamlit).
 - Suite de tests con `pytest`.
 
+[1.1.0]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.2...v1.0.3
 [1.0.2]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.1...v1.0.2

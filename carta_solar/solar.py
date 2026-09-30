@@ -1,4 +1,4 @@
-from math import asin, atan2, cos, degrees, radians, sin, tan
+from math import asin, atan, atan2, cos, degrees, radians, sin, tan
 
 import numpy as np
 
@@ -36,3 +36,42 @@ def xy_from_alt_az(alt: float, az: float) -> tuple[float, float]:
     x = r * np.sin(theta)
     y = r * np.cos(theta)
     return float(x), float(y)
+
+
+def alt_az_from_xy(x: float, y: float) -> tuple[float, float]:
+    """Inversa de la proyección estereográfica (horizonte = 1, cenit = 0)."""
+    r = float(np.hypot(x, y))
+    alt = 90.0 - 2.0 * degrees(atan(r))
+    az = float(degrees(atan2(x, y)) % 360.0)
+    return alt, az
+
+
+def signed_bearing_diff(az: float, facade_az: float) -> float:
+    """Ángulo firmado γ ∈ (-180, 180] entre el azimut solar y la normal de fachada."""
+    return ((az - facade_az + 180.0) % 360.0) - 180.0
+
+
+def profile_angle(
+    alt: float,
+    az: float,
+    facade_az: float = 0.0,
+) -> float | None:
+    """
+    Ángulo de perfil ε (°) para un alero horizontal frente a `facade_az`.
+
+    tan ε = tan h / cos γ, con γ = az − facade_az.
+    Devuelve None si alt ≤ 0 o el sol está detrás de la fachada (cos γ ≤ 0).
+    """
+    if alt <= 0:
+        return None
+    gamma = radians(signed_bearing_diff(az, facade_az))
+    cos_g = cos(gamma)
+    if cos_g <= 0:
+        return None
+    tan_eps = tan(radians(alt)) / cos_g
+    return degrees(atan(tan_eps))
+
+
+def profile_angle_north(alt: float, az: float) -> float | None:
+    """Ángulo de perfil para fachada norte (facade_az = 0°)."""
+    return profile_angle(alt, az, facade_az=0.0)

@@ -1,4 +1,4 @@
-numpy>=1.24
-matplotlib>=3.7
-streamlit>=1.28
-pytest>=7.0
+numpy==2.4.4
+matplotlib==3.11.2
+streamlit==1.64.0
+pytest==9.1.1

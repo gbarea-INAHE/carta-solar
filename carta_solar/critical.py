@@ -1,14 +1,18 @@
-"""Análisis del período crítico y cálculo de α mínimo de protección."""
+"""Análisis del período crítico y cálculo de α por ángulo de perfil ε."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 import numpy as np
-from matplotlib.path import Path
 
-from carta_solar.mask import build_shaded_region_vertices
-from carta_solar.solar import solar_alt_az, xy_from_alt_az
+from carta_solar.solar import (
+    alt_az_from_xy,
+    profile_angle,
+    signed_bearing_diff,
+    solar_alt_az,
+    xy_from_alt_az,
+)
 
 # Día representativo (21) de cada mes en día del año.
 MONTH_TO_DAY_OF_YEAR: dict[int, int] = {
@@ -26,7 +30,9 @@ MONTH_TO_DAY_OF_YEAR: dict[int, int] = {
     12: 355,
 }
 
-DEFAULT_CRITICAL_MONTHS: frozenset[int] = frozenset({11, 12, 1, 2, 3})
+DEFAULT_CRITICAL_MONTHS_HS: frozenset[int] = frozenset({11, 12, 1, 2, 3})
+DEFAULT_CRITICAL_MONTHS_HN: frozenset[int] = frozenset({5, 6, 7, 8, 9})
+DEFAULT_CRITICAL_MONTHS: frozenset[int] = DEFAULT_CRITICAL_MONTHS_HS
 
 MONTH_NAMES = {
     1: "Ene",
@@ -42,6 +48,20 @@ MONTH_NAMES = {
     11: "Nov",
     12: "Dic",
 }
+
+
+def default_critical_months_for_lat(lat: float) -> frozenset[int]:
+    """Verano local: Nov–Mar (HS) o May–Sep (HN)."""
+    return DEFAULT_CRITICAL_MONTHS_HS if lat < 0 else DEFAULT_CRITICAL_MONTHS_HN
+
+
+def facade_azimuth_for_lat(lat: float) -> float:
+    """Fachada ecuatorial: Norte (0°) en HS, Sur (180°) en HN."""
+    return 0.0 if lat < 0 else 180.0
+
+
+def facade_label_for_lat(lat: float) -> str:
+    return "Norte" if lat < 0 else "Sur"
 
 
 @dataclass(frozen=True)
@@ -64,15 +84,22 @@ class SolarSample:
         return f"{self.month_label} {h:02d}:{m:02d}h (alt {self.alt:.1f}°)"
 
 
+def is_in_equatorial_sector(az: float, y: float, facade_az: float = 0.0) -> bool:
+    """Semicírculo hacia el ecuador (frente a la fachada ecuatorial)."""
+    gamma = abs(signed_bearing_diff(az, facade_az))
+    in_front = gamma <= 90.0 + 1e-9
+    if facade_az % 360.0 == 0.0:
+        return in_front and y >= -1e-9
+    return in_front and y <= 1e-9
+
+
 def is_in_northern_sector(az: float, y: float) -> bool:
-    """Semicírculo superior de la carta (sector norte para alero)."""
-    az_norm = az % 360.0
-    in_az_range = az_norm >= 270.0 or az_norm <= 90.0
-    return in_az_range and y >= 0.0
+    """Compatibilidad: sector norte (fachada Norte)."""
+    return is_in_equatorial_sector(az, y, facade_az=0.0)
 
 
 def max_y_on_alpha_arc(x: float, alpha: float) -> float:
-    """Cota y máxima del arco α para una abscisa x (borde superior de la zona sombreada)."""
+    """Cota y del arco α (fachada Norte) para una abscisa x."""
     from carta_solar.mask import circle_params_for_alpha
 
     y_c, radius, _ = circle_params_for_alpha(alpha)
@@ -81,34 +108,52 @@ def max_y_on_alpha_arc(x: float, alpha: float) -> float:
     return float(y_c + np.sqrt(max(radius * radius - x * x, 0.0)))
 
 
-def is_point_shaded_by_alpha(x: float, y: float, alpha: float) -> bool:
+def is_protected_by_alpha(
+    alt: float,
+    az: float,
+    alpha: float,
+    facade_az: float = 0.0,
+) -> bool:
     """
-    True si el Sol en (x, y) queda en la zona protegida (bajo el arco α, hacia el horizonte).
+    Protegido por alero de ángulo α ⇔ ε ≥ α (tol. 1e-6°).
 
-    En la carta, y mayor = más cerca del horizonte = menor altitud solar.
+    Sol detrás de la fachada se considera protegido.
     """
-    if y < -1e-9:
+    eps = profile_angle(alt, az, facade_az)
+    if eps is None:
+        return True
+    return eps + 1e-6 >= alpha
+
+
+def is_point_shaded_by_alpha(
+    x: float,
+    y: float,
+    alpha: float,
+    facade_az: float = 0.0,
+) -> bool:
+    """True si el Sol en (x, y) queda protegido por el alero α."""
+    alt, az = alt_az_from_xy(x, y)
+    if alt <= 0:
         return False
-    threshold = max_y_on_alpha_arc(x, alpha)
-    return y >= threshold - 1e-6
+    return is_protected_by_alpha(alt, az, alpha, facade_az)
 
 
-def min_alpha_for_point(x: float, y: float, *, precision: float = 0.25) -> float:
-    """Menor α (°) que aún protege el punto (alero más shallow posible)."""
-    if y < 0:
+def required_alpha_for_point(
+    alt: float,
+    az: float,
+    facade_az: float = 0.0,
+) -> float | None:
+    """ε requerido para proteger el punto (None si está detrás de la fachada)."""
+    return profile_angle(alt, az, facade_az)
+
+
+def min_alpha_for_point(x: float, y: float, facade_az: float = 0.0) -> float:
+    """ε en grados para el punto (x, y); 0 si está detrás o bajo el horizonte."""
+    alt, az = alt_az_from_xy(x, y)
+    eps = profile_angle(alt, az, facade_az)
+    if eps is None:
         return 0.0
-
-    lo, hi = 0.5, 89.0
-    if not is_point_shaded_by_alpha(x, y, hi):
-        return hi
-
-    while hi - lo > precision:
-        mid = (lo + hi) / 2.0
-        if is_point_shaded_by_alpha(x, y, mid):
-            hi = mid
-        else:
-            lo = mid
-    return hi
+    return eps
 
 
 def collect_critical_samples(
@@ -118,8 +163,11 @@ def collect_critical_samples(
     hour_end: int,
     *,
     hour_step: float = 0.5,
+    facade_az: float | None = None,
 ) -> list[SolarSample]:
-    """Muestrea posiciones solares del período crítico en el sector norte."""
+    """Muestrea posiciones solares del período crítico frente a la fachada."""
+    if facade_az is None:
+        facade_az = facade_azimuth_for_lat(lat)
     samples: list[SolarSample] = []
     hours = np.arange(hour_start, hour_end + 1e-9, hour_step)
 
@@ -130,7 +178,7 @@ def collect_critical_samples(
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
-            if not is_in_northern_sector(az, y):
+            if not is_in_equatorial_sector(az, y, facade_az):
                 continue
             samples.append(
                 SolarSample(
@@ -151,11 +199,9 @@ def compute_noon_alpha(
     months: frozenset[int],
 ) -> tuple[float, int]:
     """
-    α de dimensionamiento: altitud solar mínima al mediodía (12 h) en el
-    meridiano Norte, entre los meses críticos seleccionados.
+    Altitud solar mínima al mediodía (12 h) entre los meses críticos.
 
-    En la carta estereográfica coincide con el círculo de altitud en el eje N.
-    Retorna (alpha_deg, month_with_min_alt).
+    Referencia/diagnóstico; el dimensionamiento usa `compute_required_alpha`.
     """
     if not months:
         raise ValueError("Seleccioná al menos un mes del período crítico.")
@@ -176,33 +222,67 @@ def compute_noon_alpha(
     return min_alt, month
 
 
+def compute_required_alpha(
+    lat: float,
+    months: frozenset[int],
+    hour_start: int,
+    hour_end: int,
+    *,
+    facade_az: float | None = None,
+) -> tuple[float, list[SolarSample], int | None]:
+    """
+    α de diseño: mínimo ángulo de perfil ε sobre las muestras del período crítico.
+
+    Retorna (alpha_deg, samples, limiting_month). Si no hay muestras, α = 90°.
+    """
+    if facade_az is None:
+        facade_az = facade_azimuth_for_lat(lat)
+    samples = collect_critical_samples(
+        lat, months, hour_start, hour_end, facade_az=facade_az
+    )
+    if not samples:
+        return 90.0, [], None
+
+    best_eps = float("inf")
+    limiting_month: int | None = None
+    for sample in samples:
+        eps = profile_angle(sample.alt, sample.az, facade_az)
+        if eps is None:
+            continue
+        if eps < best_eps:
+            best_eps = eps
+            limiting_month = sample.month
+
+    if best_eps == float("inf"):
+        return 90.0, samples, None
+    return best_eps, samples, limiting_month
+
+
 def compute_minimum_alpha(
     lat: float,
     months: frozenset[int],
     hour_start: int,
     hour_end: int,
 ) -> tuple[float, list[SolarSample]]:
-    """
-    α mínimo que cubre todos los puntos del período crítico en sector norte.
-
-    Retorna (alpha_min, samples).
-    """
-    samples = collect_critical_samples(lat, months, hour_start, hour_end)
-    if not samples:
-        return 0.0, []
-
-    required = [min_alpha_for_point(s.x, s.y) for s in samples]
-    return max(required), samples
+    """Alias histórico de `compute_required_alpha` (sin mes limitante)."""
+    alpha, samples, _ = compute_required_alpha(lat, months, hour_start, hour_end)
+    return alpha, samples
 
 
 def find_unprotected_samples(
     samples: list[SolarSample],
     alpha: float | None,
+    *,
+    facade_az: float = 0.0,
 ) -> list[SolarSample]:
     """Puntos del período crítico no cubiertos por la máscara α."""
     if alpha is None:
         return list(samples)
-    return [s for s in samples if not is_point_shaded_by_alpha(s.x, s.y, alpha)]
+    return [
+        s
+        for s in samples
+        if not is_protected_by_alpha(s.alt, s.az, alpha, facade_az)
+    ]
 
 
 def format_exposure_report(
@@ -210,29 +290,41 @@ def format_exposure_report(
     alpha: float | None,
     *,
     max_lines: int = 8,
+    limiting_month: int | None = None,
     noon_month: int | None = None,
+    facade_az: float = 0.0,
 ) -> str:
     """Texto resumen de cobertura y huecos."""
+    month = limiting_month if limiting_month is not None else noon_month
+
     if alpha is None:
         if not samples:
-            return "Sin muestras en el período crítico (sector norte)."
-        return f"Período crítico: {len(samples)} posiciones en sector norte (sin máscara)."
+            return "Sin muestras en el período crítico (sector ecuatorial)."
+        return (
+            f"Período crítico: {len(samples)} posiciones frente a la fachada "
+            "(sin máscara)."
+        )
 
-    noon_note = ""
-    if noon_month is not None:
-        noon_note = (
-            f"α = {alpha:g}° (altitud al mediodía solar, mes {MONTH_NAMES[noon_month]}).\n"
+    alpha_note = ""
+    if month is not None:
+        alpha_note = (
+            f"α = {alpha:g}° (mín. ángulo de perfil ε del período crítico, "
+            f"mes {MONTH_NAMES[month]}).\n"
+        )
+    else:
+        alpha_note = (
+            f"α = {alpha:g}° (mín. ángulo de perfil ε del período crítico).\n"
         )
 
     if not samples:
-        return noon_note + "Sin muestras horarias en el sector norte."
+        return alpha_note + "Sin muestras horarias frente a la fachada."
 
-    unprotected = find_unprotected_samples(samples, alpha)
+    unprotected = find_unprotected_samples(samples, alpha, facade_az=facade_az)
     total = len(samples)
     covered = total - len(unprotected)
     pct = 100.0 * covered / total
     header = (
-        f"{noon_note}"
+        f"{alpha_note}"
         f"Rango horario {total} posiciones: {covered}/{total} bajo máscara ({pct:.0f}%)."
     )
 

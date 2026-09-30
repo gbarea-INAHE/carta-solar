@@ -49,3 +49,27 @@ def test_generate_figure_from_state_pipeline():
     assert len(fig.axes) == 2
     png = figure_to_png_bytes(fig)
     assert len(png) > 1000
+
+
+def test_generate_figure_northern_hemisphere():
+    from carta_solar.critical import DEFAULT_CRITICAL_MONTHS_HN
+
+    state = AppState(
+        site_name="Madrid",
+        lat=40.4,
+        lon=-3.7,
+        sill_height_m=0.9,
+        window_height_m=1.2,
+        gap_to_overhang_m=0.3,
+        critical_months=DEFAULT_CRITICAL_MONTHS_HN,
+        critical_hour_start=10,
+        critical_hour_end=18,
+        hour_start=5,
+        hour_end=19,
+        highlight_critical_period=True,
+    )
+    config = apply_computed_mask(build_config_from_state(state))
+    assert config.facade_label == "Sur"
+    assert 0 < config.mask_alt < 90
+    fig = generate_carta_solar(config)
+    assert len(fig.axes) == 2

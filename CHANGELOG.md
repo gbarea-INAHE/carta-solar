@@ -7,6 +7,11 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
 ## [1.1.0] - 2026-09-30
 
+### Added
+
+- DOI de versión Zenodo: [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955)
+  (concepto: [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118)).
+
 ### Fixed
 
 - Criterio de sombreado invertido en `is_point_shaded_by_alpha`: el informe y los

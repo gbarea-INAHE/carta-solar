@@ -1,6 +1,6 @@
 # Carta Solar — Aleros
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20725119.svg)](https://doi.org/10.5281/zenodo.20725119)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20725118.svg)](https://doi.org/10.5281/zenodo.20725118)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Herramienta de código abierto para generar **cartas solares estereográficas** (transportador SOL-AR) y dimensionar **aleros horizontales en fachada ecuatorial** (Norte en hemisferio sur, Sur en hemisferio norte) a partir del período crítico de insolación y medidas en corte vertical. Incluye interfaz de escritorio (tkinter) y versión web (Streamlit).
@@ -12,7 +12,8 @@ Herramienta de código abierto para generar **cartas solares estereográficas** 
 | **Autores** | Gustavo Barea y Carolina Ganem |
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |
-| **DOI Zenodo** | [10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119) |
+| **DOI Zenodo (concepto)** | [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118) |
+| **DOI Zenodo (v1.1.0)** | [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955) |
 
 **Repositorio de desarrollo:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
 
@@ -52,7 +53,7 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
 
 **APA (7.ª ed.)**
 
-> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725119
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.23049955
 
 **BibTeX**
 
@@ -63,8 +64,8 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
   year         = {2026},
   publisher    = {Zenodo},
   version      = {1.1.0},
-  doi          = {10.5281/zenodo.20725119},
-  url          = {https://doi.org/10.5281/zenodo.20725119}
+  doi          = {10.5281/zenodo.23049955},
+  url          = {https://doi.org/10.5281/zenodo.23049955}
 }
 ```
 
@@ -93,7 +94,7 @@ La fachada se elige automáticamente: **Norte** si lat < 0, **Sur** si lat ≥ 0
 Instrucciones completas en **[DEPLOYMENT.md](DEPLOYMENT.md)**:
 
 1. Push a GitHub público
-2. Release en GitHub → archivo persistente y DOI en Zenodo ([10.5281/zenodo.20725119](https://doi.org/10.5281/zenodo.20725119))
+2. Release en GitHub → archivo persistente y DOI en Zenodo ([v1.1.0](https://doi.org/10.5281/zenodo.23049955); [concepto](https://doi.org/10.5281/zenodo.20725118))
 3. App web en [Streamlit Cloud](https://carta-solar.streamlit.app/)
 
 ## Tests

@@ -1,52 +1,37 @@
-"""Cálculo constructivo de alero horizontal (fachada ecuatorial)."""
+"""Cálculo constructivo de alero horizontal (API estable)."""
 
 from __future__ import annotations
 
-import math
-from dataclasses import replace
+from carta_solar.config import DEVICE_OVERHANG, DEVICE_VERTICAL_FIN, CartaSolarConfig
+from carta_solar.devices.overhang import (
+    apply_overhang_design,
+    compute_overhang_design,
+    overhang_projection,
+)
+from carta_solar.devices.vertical_fin import apply_vertical_fin_design
 
-from carta_solar.config import CartaSolarConfig
-from carta_solar.critical import compute_required_alpha
-
-
-def overhang_projection(effective_height_m: float, alpha_deg: float) -> float:
-    """
-    Profundidad horizontal del alero P (m).
-
-    P = H_eff / tan(α), con α = mín. ángulo de perfil ε del período crítico.
-    """
-    if effective_height_m <= 0:
-        raise ValueError("La altura efectiva debe ser mayor que 0.")
-    if not 0 < alpha_deg < 90:
-        raise ValueError("El ángulo α debe estar entre 0° y 90°.")
-    return effective_height_m / math.tan(math.radians(alpha_deg))
+__all__ = [
+    "overhang_projection",
+    "compute_overhang_from_config",
+    "apply_computed_mask",
+    "apply_computed_design",
+]
 
 
 def compute_overhang_from_config(config: CartaSolarConfig) -> tuple[float, float, int | None]:
-    """
-    Calcula α (mín ε) y profundidad P del alero.
-
-    Retorna (alpha_deg, projection_m, limiting_month).
-    """
-    alpha, _samples, month = compute_required_alpha(
-        config.lat,
-        config.critical_months,
-        config.critical_hour_start,
-        config.critical_hour_end,
-        facade_az=config.facade_azimuth,
-        lon=config.lon,
-        use_civil_hours=config.use_civil_hours,
-        timezone_utc_hours=config.timezone_utc_offset,
-    )
-    if not 0 < alpha < 90:
-        raise ValueError(
-            "No se pudo determinar un α de diseño en (0°, 90°) para el período crítico."
-        )
-    projection = overhang_projection(config.effective_shading_height_m, alpha)
-    return alpha, projection, month
+    """Calcula α (mín ε) y profundidad P del alero."""
+    return compute_overhang_design(config)
 
 
 def apply_computed_mask(config: CartaSolarConfig) -> CartaSolarConfig:
-    """Devuelve una copia de config con mask_alt asignado automáticamente."""
-    alpha, _, _ = compute_overhang_from_config(config)
-    return replace(config, mask_alt=alpha)
+    """Aplica el diseño del dispositivo activo (alero o aletas)."""
+    if config.device_mode == DEVICE_VERTICAL_FIN:
+        return apply_vertical_fin_design(config)
+    if config.device_mode == DEVICE_OVERHANG:
+        return apply_overhang_design(config)
+    raise ValueError(f"Modo de dispositivo desconocido: {config.device_mode}")
+
+
+def apply_computed_design(config: CartaSolarConfig) -> CartaSolarConfig:
+    """Alias explícito de apply_computed_mask."""
+    return apply_computed_mask(config)

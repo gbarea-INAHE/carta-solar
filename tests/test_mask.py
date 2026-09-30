@@ -60,9 +60,17 @@ def test_shaded_region_has_positive_area():
     assert area > 0.1
 
 
-def test_shaded_region_south_facade_mirrored():
+def test_shaded_region_south_facade_rotated():
     north = build_shaded_region_vertices(55.0, facade_az=0.0)
     south = build_shaded_region_vertices(55.0, facade_az=180.0)
     assert np.all(south[:, 1] <= 1e-9)
-    assert np.allclose(south[:, 0], north[:, 0])
-    assert np.allclose(south[:, 1], -north[:, 1])
+    assert np.allclose(south[:, 0], -north[:, 0], atol=1e-6)
+    assert np.allclose(south[:, 1], -north[:, 1], atol=1e-6)
+
+
+def test_shaded_region_east_facade_peak_on_east():
+    from carta_solar.mask import facade_peak_xy
+
+    x, y = facade_peak_xy(55.0, facade_az=90.0)
+    assert x == pytest.approx(north_peak_y(55.0), abs=1e-6)
+    assert y == pytest.approx(0.0, abs=1e-6)

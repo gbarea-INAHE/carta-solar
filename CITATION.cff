@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
-title: "Carta Solar — Aleros"
-version: 1.1.1
+title: "Carta Solar — Parasoles"
+version: 1.2.0
 date-released: 2026-09-30
 license: MIT
 authors:
@@ -16,28 +16,23 @@ authors:
     name-particle: Dra.
     affiliation: "INAHE-CONICET"
 repository-code: "https://github.com/gbarea-INAHE/carta-solar"
-url: "https://doi.org/10.5281/zenodo.23050120"
-doi: 10.5281/zenodo.23050120
+url: "https://doi.org/10.5281/zenodo.20725118"
+doi: 10.5281/zenodo.20725118
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.23050120
-    description: "This version (v1.1.1)"
-  - type: doi
     value: 10.5281/zenodo.20725118
-    description: "Concept DOI (all versions)"
+    description: "Concept DOI (all versions; resolves to latest)"
 keywords:
   - solar chart
   - stereographic projection
   - overhang
+  - vertical fin
   - shading
   - architecture
   - SOL-AR
   - bioclimatic design
 abstract: >
   Herramienta para generar cartas solares estereográficas y dimensionar
-  aleros horizontales en fachada ecuatorial (norte en hemisferio sur, sur
-  en hemisferio norte) a partir del período crítico de insolación y medidas
-  en corte vertical. El ángulo α de diseño es el mínimo ángulo de perfil ε
-  del período crítico. Las horas pueden interpretarse como civiles (reloj)
-  convirtiendo con longitud, huso UTC y ecuación del tiempo. Incluye
-  interfaz de escritorio (tkinter) y versión web (Streamlit).
+  aleros horizontales (cualquier azimut) y parasoles verticales a partir
+  del período crítico de insolación. Incluye interfaz web (Streamlit) y
+  de escritorio (tkinter).

@@ -1,4 +1,4 @@
-"""Diagrama en sección del alero y resaltado del período crítico."""
+"""Diagrama en sección del dispositivo y resaltado del período crítico."""
 
 from __future__ import annotations
 
@@ -9,20 +9,23 @@ from matplotlib.axes import Axes
 from matplotlib.path import Path as MplPath
 from matplotlib.patches import PathPatch, Rectangle
 
-from carta_solar.config import CartaSolarConfig
+from carta_solar.config import DEVICE_VERTICAL_FIN, CartaSolarConfig
 from carta_solar.critical import (
     MONTH_NAMES,
     MONTH_TO_DAY_OF_YEAR,
     collect_critical_samples,
     find_unprotected_samples,
-    is_in_equatorial_sector,
+    is_in_front_of_facade,
 )
-from carta_solar.overhang import overhang_projection
+from carta_solar.devices.vertical_fin import (
+    find_unprotected_by_fin,
+    fin_depth_from_angle,
+)
+from carta_solar.devices.overhang import overhang_projection
 from carta_solar.solar import solar_alt_az, solar_alt_az_at_clock, xy_from_alt_az
 
 CRITICAL_PATH_COLOR = "#CC0000"
 CRITICAL_PATH_WIDTH = 2.2
-# Okabe–Ito (colorblind-safe): vermillion / bluish green
 EXPOSED_MARKER_COLOR = "#D55E00"
 PROTECTED_MARKER_COLOR = "#009E73"
 EXPOSED_MARKER = "x"
@@ -33,6 +36,14 @@ CRITICAL_MONTH_PATH_COLOR = "#4DA6D9"
 
 
 def draw_section_diagram(ax: Axes, config: CartaSolarConfig) -> None:
+    """Panel constructivo según modo de dispositivo."""
+    if config.device_mode == DEVICE_VERTICAL_FIN:
+        draw_vertical_fin_plan(ax, config)
+    else:
+        draw_overhang_section(ax, config)
+
+
+def draw_overhang_section(ax: Axes, config: CartaSolarConfig) -> None:
     """Corte vertical: antepecho, ventana, vano y alero con cotas reales."""
     ax.set_aspect("equal", adjustable="box")
     ax.axis("off")
@@ -157,10 +168,59 @@ def draw_section_diagram(ax: Axes, config: CartaSolarConfig) -> None:
     ax.set_title(facade_title, fontsize=10, pad=8)
 
 
+def draw_vertical_fin_plan(ax: Axes, config: CartaSolarConfig) -> None:
+    """Planta esquemática: muro, vano y aletas verticales."""
+    ax.set_aspect("equal", adjustable="box")
+    ax.axis("off")
+    title = f"Planta — fachada {config.facade_label} (aletas)"
+    w = config.window_width_m
+    beta = config.mask_fin_angle
+
+    if beta is None:
+        ax.set_xlim(-0.5, 2.5)
+        ax.set_ylim(-0.5, 2.0)
+        ax.text(1.0, 0.7, "Calcular aletas", ha="center", va="center", fontsize=11, color="#666666")
+        ax.set_title(title, fontsize=10, pad=8)
+        return
+
+    bilateral = config.fin_arrangement != "single"
+    depth = fin_depth_from_angle(w, beta, bilateral=bilateral)
+    wall_t = 0.12
+    margin = max(depth, w) * 0.35
+    ax.set_xlim(-margin - wall_t, w + margin)
+    ax.set_ylim(-margin, depth + margin)
+
+    # Muro
+    ax.add_patch(Rectangle((-wall_t, -0.05), wall_t, 0.1, facecolor="#888888", edgecolor="#333333"))
+    ax.add_patch(Rectangle((w, -0.05), wall_t, 0.1, facecolor="#888888", edgecolor="#333333"))
+    # Vano
+    ax.plot([0, w], [0, 0], color="#2266AA", linewidth=3)
+    # Aletas
+    ax.plot([0, 0], [0, depth], color="#555555", linewidth=4, solid_capstyle="butt")
+    if bilateral:
+        ax.plot([w, w], [0, depth], color="#555555", linewidth=4, solid_capstyle="butt")
+    # Ángulo β
+    arc = np.linspace(0, math.radians(beta), 24)
+    r = min(depth, w / 2) * 0.45
+    ax.plot(r * np.sin(arc), r * np.cos(arc), color="#CC0000", linewidth=1.4)
+    ax.text(r * 0.7, r * 0.55, f"β = {beta:.1f}°", color="#CC0000", fontsize=9)
+    ax.text(w / 2, -margin * 0.45, f"W = {w:g} m", ha="center", fontsize=8)
+    ax.text(
+        -margin * 0.2 if not bilateral else w / 2,
+        depth + margin * 0.25,
+        f"D = {depth:.3f} m",
+        ha="center",
+        fontsize=9,
+        fontweight="bold",
+    )
+    ax.set_title(title, fontsize=10, pad=8)
+
+
 def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
     """Rellena en celeste translúcido las trayectorias de los meses a sombrear."""
     facade_az = config.facade_azimuth
-    hours = np.linspace(4, 20, 241)
+    n_hours = 81 if config.is_preview else 241
+    hours = np.linspace(4, 20, n_hours)
     for month in sorted(config.critical_months):
         day = MONTH_TO_DAY_OF_YEAR[month]
         path_points: list[tuple[float, float]] = []
@@ -176,7 +236,7 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
-            if is_in_equatorial_sector(az, y, facade_az):
+            if is_in_front_of_facade(az, facade_az):
                 path_points.append((x, y))
 
         if len(path_points) < 2:
@@ -184,8 +244,9 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
 
         xs = [p[0] for p in path_points]
         ys = [p[1] for p in path_points]
-        polygon_x = xs + [xs[-1], xs[0]]
-        polygon_y = ys + [0.0, 0.0]
+        # Cerrar hacia el origen proyectado sobre el diámetro de fachada ≈ cenit-lado
+        polygon_x = xs + [0.0]
+        polygon_y = ys + [0.0]
         patch = PathPatch(
             MplPath(np.column_stack([polygon_x, polygon_y])),
             facecolor=CRITICAL_MONTH_FILL,
@@ -196,7 +257,6 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
         )
         ax.add_patch(patch)
 
-        # Marcador de mediodía solar verdadero (hora solar 12).
         alt_noon, az_noon = solar_alt_az(config.lat, day, 12.0)
         if alt_noon > 0:
             x_n, y_n = xy_from_alt_az(alt_noon, az_noon)
@@ -244,14 +304,21 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
     if not samples:
         return
 
-    unprotected = {
-        (s.month, round(s.hour, 2))
-        for s in find_unprotected_samples(
-            samples, config.mask_alt, facade_az=facade_az
-        )
-    }
+    if config.device_mode == DEVICE_VERTICAL_FIN:
+        unprotected = {
+            (s.month, round(s.hour, 2))
+            for s in find_unprotected_by_fin(samples, config.mask_fin_angle, facade_az)
+        }
+    else:
+        unprotected = {
+            (s.month, round(s.hour, 2))
+            for s in find_unprotected_samples(
+                samples, config.mask_alt, facade_az=facade_az
+            )
+        }
 
-    hours = np.arange(config.critical_hour_start, config.critical_hour_end + 0.01, 0.25)
+    step = 0.5 if config.is_preview else 0.25
+    hours = np.arange(config.critical_hour_start, config.critical_hour_end + 0.01, step)
     for month in sorted(config.critical_months):
         day = MONTH_TO_DAY_OF_YEAR[month]
         xs, ys = [], []
@@ -267,7 +334,7 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
-            if is_in_equatorial_sector(az, y, facade_az):
+            if is_in_front_of_facade(az, facade_az):
                 xs.append(x)
                 ys.append(y)
         if len(xs) >= 2:
@@ -294,20 +361,6 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
             alpha=0.9,
         )
 
-    ax.plot(
-        [],
-        [],
-        marker=PROTECTED_MARKER,
-        color=PROTECTED_MARKER_COLOR,
-        linestyle="none",
-        label="Protegido",
-    )
-    ax.plot(
-        [],
-        [],
-        marker=EXPOSED_MARKER,
-        color=EXPOSED_MARKER_COLOR,
-        linestyle="none",
-        label="Expuesto",
-    )
+    ax.plot([], [], marker=PROTECTED_MARKER, color=PROTECTED_MARKER_COLOR, linestyle="none", label="Protegido")
+    ax.plot([], [], marker=EXPOSED_MARKER, color=EXPOSED_MARKER_COLOR, linestyle="none", label="Expuesto")
     ax.legend(loc="lower left", fontsize=7, framealpha=0.9)

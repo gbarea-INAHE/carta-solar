@@ -62,6 +62,12 @@ def test_facade_from_latitude():
     assert north.critical_months == frozenset({5, 6, 7, 8, 9})
 
 
+def test_facade_azimuth_override():
+    config = CartaSolarConfig(lat=-34.0, facade_azimuth_override=90.0)
+    assert config.facade_azimuth == 90.0
+    assert config.facade_label == "Este"
+
+
 def test_site_name_truncated():
     long_name = "A" * 120
     config = CartaSolarConfig(site_name=long_name)

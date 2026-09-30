@@ -1,17 +1,16 @@
-"""Transportador de máscara estilo SOL-AR (arcos circulares anclados en Este/Oeste).
+"""Transportador de máscara estilo SOL-AR (arcos circulares rotables).
 
 Geometría del transportador en carta estereográfica
 ---------------------------------------------------
 Cada curva de ángulo α NO es un círculo de altitud ni alt = α×cos(δ).
-Es un arco de circunferencia en el plano de proyección que:
+Es un arco de circunferencia en el plano de proyección que, en marco de
+fachada Norte:
 
   1. Pasa por Oeste (-1, 0) y Este (1, 0) en el horizonte.
-  2. Corta el meridiano de la fachada ecuatorial en (0, ±r(α)),
-     con r(α) = tan((90°-α)/2). Para fachada Sur se refleja por el
-     diámetro E–O (y → −y).
+  2. Corta el meridiano Norte en (0, r(α)), con r(α) = tan((90°-α)/2).
 
-Así las curvas α=10°, 20°, … coinciden en el eje de fachada con la grilla de
-altitud (equidistantes en grados) y no se deforman al acercarse al cenit.
+Para un azimut de fachada arbitrario se rota el conjunto por −facade_az
+alrededor del cenit, de modo que el pico del arco apunta a la normal.
 """
 
 from __future__ import annotations
@@ -29,6 +28,8 @@ ACTIVE_LINE_COLOR = "#555555"
 ACTIVE_LINEWIDTH = 2.5
 FILL_COLOR = "#888888"
 FILL_ALPHA = 0.25
+FIN_FILL_COLOR = "#6B8E9B"
+FIN_FILL_ALPHA = 0.28
 EW_LINE_COLOR = "#000000"
 EW_LINEWIDTH = 1.0
 
@@ -39,9 +40,13 @@ WEST = (-1.0, 0.0)
 EAST = (1.0, 0.0)
 
 
-def _y_sign(facade_az: float) -> float:
-    """+1 fachada Norte, −1 fachada Sur."""
-    return -1.0 if (facade_az % 360.0) == 180.0 else 1.0
+def rotate_points(points: np.ndarray, facade_az: float) -> np.ndarray:
+    """Rota puntos del marco Norte al azimut de fachada (θ = −facade_az)."""
+    theta = np.radians(-float(facade_az) % 360.0)
+    c, s = np.cos(theta), np.sin(theta)
+    x = points[:, 0]
+    y = points[:, 1]
+    return np.column_stack([x * c - y * s, x * s + y * c])
 
 
 def circle_params_for_alpha(alpha: float) -> tuple[float, float, float]:
@@ -64,7 +69,7 @@ def alpha_curve_points(
     num_points: int = CURVE_SAMPLE_POINTS,
     facade_az: float = 0.0,
 ) -> np.ndarray:
-    """Arco del transportador O → pico ecuatorial → E (reflejado si fachada Sur)."""
+    """Arco del transportador rotado hacia la fachada."""
     y_c, radius, _ = circle_params_for_alpha(alpha)
 
     theta_w = float(np.arctan2(-y_c, -1.0))
@@ -72,8 +77,9 @@ def alpha_curve_points(
 
     thetas = np.linspace(theta_w, theta_e, num_points)
     x = radius * np.cos(thetas)
-    y = (y_c + radius * np.sin(thetas)) * _y_sign(facade_az)
-    return np.column_stack([x, y])
+    y = y_c + radius * np.sin(thetas)
+    local = np.column_stack([x, y])
+    return rotate_points(local, facade_az)
 
 
 def build_shaded_region_vertices(
@@ -82,9 +88,9 @@ def build_shaded_region_vertices(
     num_points: int = CURVE_SAMPLE_POINTS,
     facade_az: float = 0.0,
 ) -> np.ndarray:
-    """Polígono cerrado: arco α + diámetro horizontal E → O (y = 0)."""
+    """Polígono cerrado: arco α + diámetro de fachada (rotado)."""
     curve = alpha_curve_points(alpha, num_points=num_points, facade_az=facade_az)
-    diameter = np.array([EAST, WEST])
+    diameter = rotate_points(np.array([EAST, WEST]), facade_az)
     return np.vstack([curve, diameter])
 
 
@@ -96,8 +102,8 @@ def north_peak_y(alpha: float) -> float:
 
 def facade_peak_xy(alpha: float, facade_az: float = 0.0) -> tuple[float, float]:
     """Punto donde el arco α corta el meridiano de la fachada."""
-    h = north_peak_y(alpha)
-    return 0.0, h * _y_sign(facade_az)
+    peak = rotate_points(np.array([[0.0, north_peak_y(alpha)]]), facade_az)[0]
+    return float(peak[0]), float(peak[1])
 
 
 def draw_protractor_grid(
@@ -157,16 +163,22 @@ def draw_alpha_mask(
     return patch, line
 
 
-def draw_ew_diameter(ax: Axes) -> object:
-    """Diámetro horizontal Este–Oeste."""
+def draw_facade_diameter(ax: Axes, facade_az: float = 0.0) -> object:
+    """Diámetro del transportador perpendicular a la normal de fachada."""
+    ends = rotate_points(np.array([WEST, EAST]), facade_az)
     (line,) = ax.plot(
-        [-1, 1],
-        [0, 0],
+        ends[:, 0],
+        ends[:, 1],
         color=EW_LINE_COLOR,
         linewidth=EW_LINEWIDTH,
         zorder=PROTRACTOR_ZORDER - 0.1,
     )
     return line
+
+
+def draw_ew_diameter(ax: Axes) -> object:
+    """Compatibilidad: diámetro Este–Oeste (fachada Norte)."""
+    return draw_facade_diameter(ax, facade_az=0.0)
 
 
 def draw_protractor(
@@ -181,7 +193,59 @@ def draw_protractor(
     if mask_alt is None:
         return
 
-    draw_ew_diameter(ax)
+    draw_facade_diameter(ax, facade_az=facade_az)
     if show_grid:
         draw_protractor_grid(ax, step=protractor_step, facade_az=facade_az)
     draw_alpha_mask(ax, mask_alt, facade_az=facade_az)
+
+
+def draw_vertical_fin_mask(
+    ax: Axes,
+    beta_deg: float,
+    *,
+    facade_az: float = 0.0,
+    fill_color: str = FIN_FILL_COLOR,
+    fill_alpha: float = FIN_FILL_ALPHA,
+) -> list:
+    """
+    Máscara de aletas verticales: dos sectores laterales con |γ| ≥ β
+    en el semicírculo frontal (horizonte r=1).
+    """
+    # En marco Norte: normal +y. Sectores frontales laterales:
+    # izquierda: azimut chart desde (90-beta) hasta 90 respecto a N? 
+    # Chart angles: 0=N, 90=E (matplotlib polar from +y via +x).
+    # Wedge uses math angles from +x CCW. Convert carefully.
+    # Simpler: polygon in local frame then rotate.
+    patches = []
+    for sign in (-1.0, 1.0):
+        # Local (N-up): points on horizon from gamma=beta to gamma=90
+        gammas = np.linspace(beta_deg, 90.0, 40)
+        xs = np.sin(np.radians(sign * gammas))
+        ys = np.cos(np.radians(sign * gammas))
+        # close via origin (zenith) then back
+        verts = np.column_stack([xs, ys])
+        verts = np.vstack([[0.0, 0.0], verts, [0.0, 0.0]])
+        verts = rotate_points(verts, facade_az)
+        patch = PathPatch(
+            Path(verts),
+            facecolor=fill_color,
+            edgecolor="none",
+            alpha=fill_alpha,
+            zorder=PROTRACTOR_ZORDER,
+        )
+        ax.add_patch(patch)
+        patches.append(patch)
+
+    # Cut-off rays at ±β
+    for sign in (-1.0, 1.0):
+        local = np.array([[0.0, 0.0], [np.sin(np.radians(sign * beta_deg)), np.cos(np.radians(sign * beta_deg))]])
+        pts = rotate_points(local, facade_az)
+        ax.plot(
+            pts[:, 0],
+            pts[:, 1],
+            color=ACTIVE_LINE_COLOR,
+            linewidth=ACTIVE_LINEWIDTH,
+            zorder=PROTRACTOR_ZORDER + 0.1,
+        )
+    draw_facade_diameter(ax, facade_az=facade_az)
+    return patches

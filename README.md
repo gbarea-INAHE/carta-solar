@@ -1,40 +1,36 @@
-# Carta Solar — Aleros
+# Carta Solar — Parasoles
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20725118.svg)](https://doi.org/10.5281/zenodo.20725118)
 [![CI](https://github.com/gbarea-INAHE/carta-solar/actions/workflows/ci.yml/badge.svg)](https://github.com/gbarea-INAHE/carta-solar/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-Herramienta de código abierto para generar **cartas solares estereográficas** (transportador SOL-AR) y dimensionar **aleros horizontales en fachada ecuatorial** (Norte en hemisferio sur, Sur en hemisferio norte) a partir del período crítico de insolación y medidas en corte vertical. Incluye interfaz de escritorio (tkinter) y versión web (Streamlit).
+Herramienta de código abierto para generar **cartas solares estereográficas** (transportador SOL-AR) y dimensionar **dispositivos de sombreado** según orientación de fachada:
+
+- **Alero horizontal** a cualquier azimut (α = mín. ángulo de perfil ε)
+- **Parasol vertical** / aletas (β = mín. |γ|, profundidad D)
+
+Incluye interfaz web (Streamlit) y de escritorio (tkinter; alero).
 
 | Campo | Valor |
 | --- | --- |
-| **Nombre** | Carta Solar — Aleros |
-| **Versión actual** | 1.1.1 |
+| **Nombre** | Carta Solar — Parasoles |
+| **Versión actual** | 1.2.0 |
 | **Autores** | Gustavo Barea y Carolina Ganem |
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |
 | **DOI Zenodo (concepto)** | [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118) |
-| **DOI Zenodo (v1.1.1)** | [10.5281/zenodo.23050120](https://doi.org/10.5281/zenodo.23050120) |
 
-**Repositorio de desarrollo:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
+**Repositorio:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
 
 ## Capturas de pantalla
 
-_Carta solar estereográfica con trayectorias, transportador y período crítico resaltado:_
-
 ![Carta solar estereográfica](docs/carta_solar.png)
-
-_Diagrama en sección de fachada ecuatorial con alero, ventana y ángulo α:_
 
 ![Sección — alero](docs/alero_norte.png)
 
 ## App web (Streamlit)
 
-Versión en navegador, sin instalar Python:
-
 **App en línea:** [carta-solar.streamlit.app](https://carta-solar.streamlit.app/)
-
-Instalación local:
 
 ```bash
 pip install -r requirements.txt
@@ -43,6 +39,8 @@ streamlit run streamlit_app.py
 
 ## App de escritorio (tkinter)
 
+Flujo de alero horizontal (el modo aletas está en la web):
+
 ```bash
 pip install -r requirements.txt
 python app.py
@@ -50,53 +48,36 @@ python app.py
 
 ## Cómo citar
 
-Si utilizás este software en trabajos académicos, informes o publicaciones indexadas, citá la versión archivada en Zenodo (no solo el repositorio de GitHub).
-
-**APA (7.ª ed.)**
-
-> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.1) [Software]. Zenodo. https://doi.org/10.5281/zenodo.23050120
-
-**BibTeX**
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Parasoles* (Version 1.2.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725118
 
 ```bibtex
 @software{barea2026carta_solar,
   author       = {Barea, Gustavo and Ganem, Carolina},
-  title        = {Carta Solar --- Aleros},
+  title        = {Carta Solar --- Parasoles},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.1.1},
-  doi          = {10.5281/zenodo.23050120},
-  url          = {https://doi.org/10.5281/zenodo.23050120}
+  version      = {1.2.0},
+  doi          = {10.5281/zenodo.20725118},
+  url          = {https://doi.org/10.5281/zenodo.20725118}
 }
 ```
-
-Metadatos adicionales en [CITATION.cff](CITATION.cff). Historial de versiones en [CHANGELOG.md](CHANGELOG.md).
 
 ## Requisitos
 
 - Python 3.11+
-- Dependencias fijadas en `requirements.txt`
+- Dependencias en `requirements.txt`
 
-## Flujo de trabajo (dimensionamiento de alero)
+## Flujo de trabajo
 
-1. Ingresá **latitud** y las **medidas en corte vertical**:
-   - **Antepecho** `h_s`: piso → inicio de ventana
-   - **Altura ventana** `h_v`
-   - **Vano** `h_g`: cierre superior de ventana → inicio del alero
-2. Elegí meses y horas del **período crítico** (verano local: Nov–Mar en HS, May–Sep en HN).
-3. Pulsá **Calcular alero** (en la web la carta también se actualiza al cambiar parámetros): el programa toma **α = mínimo ángulo de perfil ε** sobre las muestras del período crítico frente a la fachada ecuatorial y calcula **P = (h_v + h_g) / tan(α)**.
-4. Revisá el **informe de cobertura**, la carta con transportador y el **diagrama en sección**.
-5. Guardá o descargá PNG/PDF.
+1. Elegí **modo**: alero horizontal o parasol vertical.
+2. Definí **azimut de fachada** (presets N/E/S/O o personalizado). En E/O la app sugiere aletas.
+3. Ingresá medidas (corte para alero; ancho de vano para aletas) y período crítico.
+4. Revisá métricas (α/P o β/D), carta e informe de cobertura.
+5. Exportá PNG (en la web: vista previa rápida + PNG 300 dpi bajo demanda).
 
-La fachada se elige automáticamente: **Norte** si lat < 0, **Sur** si lat ≥ 0. El antepecho `h_s` solo se usa en el dibujo en sección; no entra en el cálculo de α ni de P. Por defecto las horas son **civiles** (reloj): se convierten a solares con **longitud**, huso UTC y ecuación del tiempo (desactivable).
+**Notas bioclimáticas:** el alero horizontal es eficaz cuando el sol crítico está alto frente a la fachada (típico N/S). En Este/Oeste el sol bajo matutino/vespertino se controla mejor con **parasoles verticales**. Horas civiles usan longitud + huso UTC + ecuación del tiempo.
 
-## Publicación (GitHub, Zenodo, web)
-
-Instrucciones completas en **[DEPLOYMENT.md](DEPLOYMENT.md)**:
-
-1. Push a GitHub público
-2. Release en GitHub → archivo persistente y DOI en Zenodo ([v1.1.1](https://doi.org/10.5281/zenodo.23050120); [concepto](https://doi.org/10.5281/zenodo.20725118))
-3. App web en [Streamlit Cloud](https://carta-solar.streamlit.app/)
+**Próximamente:** louvres horizontales y obstrucciones del entorno.
 
 ## Tests
 
@@ -107,24 +88,12 @@ python -m pytest tests/ -v
 ## Estructura
 
 ```
-carta_solar/      # núcleo: cálculos, transportador, carta, alero
-app.py            # GUI tkinter (escritorio)
-streamlit_app.py  # GUI web (Streamlit)
-docs/             # capturas de pantalla y documentación visual
-assets/           # logos opcionales
+carta_solar/           # núcleo solar, máscaras, plot
+carta_solar/devices/   # alero y parasol vertical
+app.py                 # GUI tkinter
+streamlit_app.py       # GUI web (modos + azimut)
 tests/
-CHANGELOG.md      # historial de versiones
-DEPLOYMENT.md     # guía Zenodo + Streamlit Cloud
-CITATION.cff      # metadatos de citación
-LICENSE           # MIT
 ```
-
-### Logos (opcional)
-
-Colocá en `assets/`:
-
-- `logo_inahe.png`
-- `logo_conicet.png`
 
 ## Licencia
 

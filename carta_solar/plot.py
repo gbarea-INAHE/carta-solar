@@ -9,9 +9,9 @@ from carta_solar.annotations import (
     draw_section_diagram,
 )
 from carta_solar.branding import add_figure_credit
-from carta_solar.config import CartaSolarConfig
+from carta_solar.config import DEVICE_VERTICAL_FIN, CartaSolarConfig
 from carta_solar.format_utils import format_lat_lon, site_slug
-from carta_solar.mask import draw_protractor
+from carta_solar.mask import draw_protractor, draw_vertical_fin_mask
 from carta_solar.solar import r_from_alt, solar_alt_az_at_clock, xy_from_alt_az
 
 REPRESENTATIVE_DAYS = {
@@ -122,17 +122,28 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
         x, y = xy_from_alt_az(0, az)
         ax.plot([0, x], [0, y], linestyle="--", linewidth=0.5, alpha=0.5, zorder=Z_GRID)
 
-    if config.mask_alt is not None:
+    has_device_mask = (
+        config.mask_alt is not None
+        or (config.device_mode == DEVICE_VERTICAL_FIN and config.mask_fin_angle is not None)
+    )
+    if has_device_mask:
         draw_critical_months_highlight(ax, config)
-        draw_protractor(
-            ax,
-            config.mask_alt,
-            show_grid=config.show_protractor_grid,
-            protractor_step=config.protractor_step,
-            facade_az=config.facade_azimuth,
-        )
+        if config.device_mode == DEVICE_VERTICAL_FIN and config.mask_fin_angle is not None:
+            draw_vertical_fin_mask(
+                ax, config.mask_fin_angle, facade_az=config.facade_azimuth
+            )
+        elif config.mask_alt is not None:
+            draw_protractor(
+                ax,
+                config.mask_alt,
+                show_grid=config.show_protractor_grid,
+                protractor_step=config.protractor_step,
+                facade_az=config.facade_azimuth,
+            )
 
-    hours = np.linspace(4, 20, 481)
+    traj_points = 121 if config.is_preview else 481
+    day_step = 5 if config.is_preview else 2
+    hours = np.linspace(4, 20, traj_points)
     month_label_points: list[tuple[float, float, str, float, str]] = []
     for label, day in REPRESENTATIVE_DAYS.items():
         xs, ys = [], []
@@ -162,7 +173,7 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
     hour_label_points: list[tuple[float, float, str]] = []
     for hour in range(config.hour_start, config.hour_end):
         xs, ys = [], []
-        for day in range(1, 366, 2):
+        for day in range(1, 366, day_step):
             alt, az = solar_alt_az_at_clock(
                 config.lat,
                 config.lon,
@@ -244,10 +255,12 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
     tz = config.resolved_timezone_utc
     tz_txt = f"UTC{tz:+g}" if tz else "UTC"
     hour_mode = f"horas civiles ({tz_txt})" if config.use_civil_hours else "horas solares"
+    mode_txt = "aletas" if config.device_mode == DEVICE_VERTICAL_FIN else "alero"
     ax.text(
         0.0,
         -1.22,
-        f"{config.site_name}  ·  {lat_str}  {lon_str}  ·  fachada {config.facade_label}  ·  {hour_mode}",
+        f"{config.site_name}  ·  {lat_str}  {lon_str}  ·  fachada {config.facade_label} "
+        f"({config.facade_azimuth:g}°)  ·  {mode_txt}  ·  {hour_mode}",
         ha="center",
         va="top",
         fontsize=7,

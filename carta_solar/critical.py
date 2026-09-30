@@ -57,12 +57,29 @@ def default_critical_months_for_lat(lat: float) -> frozenset[int]:
 
 
 def facade_azimuth_for_lat(lat: float) -> float:
-    """Fachada ecuatorial: Norte (0°) en HS, Sur (180°) en HN."""
+    """Fachada ecuatorial por defecto: Norte (0°) en HS, Sur (180°) en HN."""
     return 0.0 if lat < 0 else 180.0
 
 
+def facade_label_for_azimuth(az: float) -> str:
+    """Etiqueta cardinal/intercardinal según azimut de fachada."""
+    az = az % 360.0
+    names = (
+        (0.0, "Norte"),
+        (45.0, "NE"),
+        (90.0, "Este"),
+        (135.0, "SE"),
+        (180.0, "Sur"),
+        (225.0, "SO"),
+        (270.0, "Oeste"),
+        (315.0, "NO"),
+    )
+    best = min(names, key=lambda item: abs(((az - item[0] + 180.0) % 360.0) - 180.0))
+    return best[1]
+
+
 def facade_label_for_lat(lat: float) -> str:
-    return "Norte" if lat < 0 else "Sur"
+    return facade_label_for_azimuth(facade_azimuth_for_lat(lat))
 
 
 @dataclass(frozen=True)
@@ -85,18 +102,21 @@ class SolarSample:
         return f"{self.month_label} {h:02d}:{m:02d}h (alt {self.alt:.1f}°)"
 
 
+def is_in_front_of_facade(az: float, facade_az: float = 0.0) -> bool:
+    """True si el sol está frente a la fachada (|γ| ≤ 90°)."""
+    return abs(signed_bearing_diff(az, facade_az)) <= 90.0 + 1e-9
+
+
 def is_in_equatorial_sector(az: float, y: float, facade_az: float = 0.0) -> bool:
-    """Semicírculo hacia el ecuador (frente a la fachada ecuatorial)."""
-    gamma = abs(signed_bearing_diff(az, facade_az))
-    in_front = gamma <= 90.0 + 1e-9
-    if facade_az % 360.0 == 0.0:
-        return in_front and y >= -1e-9
-    return in_front and y <= 1e-9
+    """Compatibilidad: sector frontal (y se ignora; la geometría usa γ)."""
+    _ = y
+    return is_in_front_of_facade(az, facade_az)
 
 
 def is_in_northern_sector(az: float, y: float) -> bool:
     """Compatibilidad: sector norte (fachada Norte)."""
-    return is_in_equatorial_sector(az, y, facade_az=0.0)
+    _ = y
+    return is_in_front_of_facade(az, facade_az=0.0)
 
 
 def max_y_on_alpha_arc(x: float, alpha: float) -> float:
@@ -189,7 +209,7 @@ def collect_critical_samples(
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
-            if not is_in_equatorial_sector(az, y, facade_az):
+            if not is_in_front_of_facade(az, facade_az):
                 continue
             samples.append(
                 SolarSample(

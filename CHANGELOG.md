@@ -5,6 +5,25 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.0] - 2026-09-30
+
+### Added
+
+- Azimut de fachada libre (N/E/S/O o personalizado); transportador SOL-AR rotado.
+- Modo **parasol vertical** (ángulo β / profundidad D) con planta esquemática.
+- Selector de dispositivo en Streamlit + sugerencia bioclimática E/O → vertical.
+- Vista previa rápida (`chart_detail=preview`) y PNG 300 dpi bajo demanda.
+- Paquete `carta_solar/devices/` (alero y aletas).
+
+### Changed
+
+- Sector crítico por ángulo γ (frente a fachada), sin amarrar a N/S en la carta.
+- Requisitos: Python 3.11+.
+
+### Notes
+
+- Próximamente: louvres horizontales y obstrucciones del entorno.
+
 ## [1.1.1] - 2026-09-30
 
 ### Fixed
@@ -98,6 +117,7 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 - Interfaz web (`streamlit_app.py`, Streamlit).
 - Suite de tests con `pytest`.
 
+[1.2.0]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.1.1...v1.2.0
 [1.1.1]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.3...v1.0.4

@@ -5,6 +5,21 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.2] - 2026-09-30
+
+### Fixed
+
+- Parasoles verticales: β automático ya no usa mín |γ| (pegaba ~8°/D≈5 m en N/E/O).
+  Ahora usa **percentil P25** de |γ| (estilo SOL-AR), excluye sol casi normal,
+  limita profundidad constructiva y reporta β izq/der.
+- Streamlit: las horas críticas se resincronizan al cambiar el azimut de fachada
+  (E → 7–12, O → 12–18).
+
+### Added
+
+- `suggested_critical_hours`, `describe_fin_design`, tests de rotación de máscara
+  y de diferenciación N/E/S.
+
 ## [1.2.1] - 2026-09-30
 
 ### Fixed

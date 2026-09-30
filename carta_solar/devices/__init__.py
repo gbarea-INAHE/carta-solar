@@ -8,6 +8,8 @@ from carta_solar.devices.overhang import (
 from carta_solar.devices.vertical_fin import (
     apply_vertical_fin_design,
     compute_vertical_fin_design,
+    describe_fin_design,
+    suggested_critical_hours,
 )
 
 __all__ = [
@@ -16,4 +18,6 @@ __all__ = [
     "overhang_projection",
     "apply_vertical_fin_design",
     "compute_vertical_fin_design",
+    "describe_fin_design",
+    "suggested_critical_hours",
 ]

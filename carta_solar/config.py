@@ -1,20 +1,17 @@
+"""Configuración de Carta Solar (sin imports pesados a nivel de módulo)."""
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from carta_solar.critical import (
-    DEFAULT_CRITICAL_MONTHS,
-    default_critical_months_for_lat,
-    facade_azimuth_for_lat,
-    facade_label_for_azimuth,
-)
-from carta_solar.solar import estimate_timezone_utc
-
 SITE_NAME_MAX_LEN = 80
 DEVICE_OVERHANG = "overhang"
 DEVICE_VERTICAL_FIN = "vertical_fin"
 DEVICE_MODES = frozenset({DEVICE_OVERHANG, DEVICE_VERTICAL_FIN})
+
+# Verano HS por defecto; evita importar critical/numpy al cargar este módulo.
+_DEFAULT_CRITICAL_MONTHS = frozenset({11, 12, 1, 2, 3})
 
 
 @dataclass
@@ -35,7 +32,9 @@ class CartaSolarConfig:
     window_height_m: float = 1.2
     gap_to_overhang_m: float = 0.3
     window_width_m: float = 1.5
-    critical_months: frozenset[int] = field(default_factory=lambda: DEFAULT_CRITICAL_MONTHS)
+    critical_months: frozenset[int] = field(
+        default_factory=lambda: frozenset(_DEFAULT_CRITICAL_MONTHS)
+    )
     critical_hour_start: int = 10
     critical_hour_end: int = 18
     highlight_critical_period: bool = True
@@ -66,16 +65,22 @@ class CartaSolarConfig:
     def facade_azimuth(self) -> float:
         if self.facade_azimuth_override is not None:
             return self.facade_azimuth_override
+        from carta_solar.critical import facade_azimuth_for_lat
+
         return facade_azimuth_for_lat(self.lat)
 
     @property
     def facade_label(self) -> str:
+        from carta_solar.critical import facade_label_for_azimuth
+
         return facade_label_for_azimuth(self.facade_azimuth)
 
     @property
     def resolved_timezone_utc(self) -> float:
         if self.timezone_utc_offset is not None:
             return float(self.timezone_utc_offset)
+        from carta_solar.solar import estimate_timezone_utc
+
         return estimate_timezone_utc(self.lon)
 
     @property
@@ -142,5 +147,7 @@ class CartaSolarConfig:
     @classmethod
     def for_latitude(cls, lat: float, **kwargs) -> "CartaSolarConfig":
         """Config con meses críticos de verano local según hemisferio."""
+        from carta_solar.critical import default_critical_months_for_lat
+
         months = kwargs.pop("critical_months", default_critical_months_for_lat(lat))
         return cls(lat=lat, critical_months=months, **kwargs)

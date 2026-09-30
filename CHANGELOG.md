@@ -5,6 +5,19 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.2.1] - 2026-09-30
+
+### Fixed
+
+- Streamlit Cloud: `ImportError` al importar `carta_solar.config` (paquete `__init__`
+  eager + cadena pesada). Carga diferida del paquete, `config` sin numpy al importar,
+  backend Agg y traceback visible si falla el arranque.
+- `requirements.txt` sin pytest (solo runtime); rangos compatibles Python 3.11+.
+
+### Added
+
+- `tests/test_imports.py` (cadena de imports de la app web).
+
 ## [1.2.0] - 2026-09-30
 
 ### Added

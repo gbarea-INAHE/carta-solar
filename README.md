@@ -14,7 +14,7 @@ Incluye interfaz web (Streamlit) y de escritorio (tkinter; alero).
 | Campo | Valor |
 | --- | --- |
 | **Nombre** | Carta Solar — Parasoles |
-| **Versión actual** | 1.2.0 |
+| **Versión actual** | 1.2.1 |
 | **Autores** | Gustavo Barea y Carolina Ganem |
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |

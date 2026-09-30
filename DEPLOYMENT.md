@@ -47,9 +47,12 @@ Actualizá las URLs en `CITATION.cff` y `README.md` con tu usuario real.
 3. Repositorio: `gbarea-INAHE/carta-solar`
 4. Branch: `main`
 5. Main file: `streamlit_app.py`
-6. **Deploy**
-7. **URL desplegada:** [https://carta-solar.streamlit.app/](https://carta-solar.streamlit.app/)
-8. La URL también figura en `README.md` → sección **App web**
+6. **Advanced settings → Python version: 3.12** (o 3.11; evita 3.14 si falla el build)
+7. **Deploy**
+8. Si ves un `ImportError` redactado: **Manage app → Reboot** (y revisá logs).
+   La app también muestra el traceback real en pantalla si falla el import.
+9. **URL desplegada:** [https://carta-solar.streamlit.app/](https://carta-solar.streamlit.app/)
+10. La URL también figura en `README.md` → sección **App web**
 
 ## 5. Probar localmente la versión web
 

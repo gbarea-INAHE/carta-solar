@@ -3,39 +3,56 @@
 from __future__ import annotations
 
 import io
+import sys
+import traceback
 from dataclasses import dataclass
 from pathlib import Path
 
+# Repo root en sys.path (Streamlit Cloud monta en /mount/src/<repo>).
+_ROOT = Path(__file__).resolve().parent
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
+
+import matplotlib
+
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import streamlit as st
 
-from carta_solar.branding import AUTHORS, CREDIT_LINE, INSTITUTION, available_logos
-from carta_solar.config import (
-    DEVICE_OVERHANG,
-    DEVICE_VERTICAL_FIN,
-    SITE_NAME_MAX_LEN,
-    CartaSolarConfig,
-)
-from carta_solar.critical import (
-    DEFAULT_CRITICAL_MONTHS,
-    MONTH_NAMES,
-    collect_critical_samples,
-    compute_required_alpha,
-    default_critical_months_for_lat,
-    facade_azimuth_for_lat,
-    facade_label_for_azimuth,
-    format_exposure_report,
-)
-from carta_solar.devices.vertical_fin import (
-    NEAR_NORMAL_DEG,
-    describe_fin_design,
-    find_unprotected_by_fin,
-    fin_depth_from_angle,
-    suggested_critical_hours,
-)
-from carta_solar.overhang import apply_computed_mask, overhang_projection
-from carta_solar.plot import build_output_basename, generate_carta_solar
-from carta_solar.solar import estimate_timezone_utc
+try:
+    from carta_solar.branding import AUTHORS, CREDIT_LINE, INSTITUTION, available_logos
+    from carta_solar.config import (
+        DEVICE_OVERHANG,
+        DEVICE_VERTICAL_FIN,
+        SITE_NAME_MAX_LEN,
+        CartaSolarConfig,
+    )
+    from carta_solar.critical import (
+        DEFAULT_CRITICAL_MONTHS,
+        MONTH_NAMES,
+        collect_critical_samples,
+        compute_required_alpha,
+        default_critical_months_for_lat,
+        facade_azimuth_for_lat,
+        facade_label_for_azimuth,
+        format_exposure_report,
+    )
+    from carta_solar.devices.vertical_fin import (
+        NEAR_NORMAL_DEG,
+        describe_fin_design,
+        find_unprotected_by_fin,
+        fin_depth_from_angle,
+        suggested_critical_hours,
+    )
+    from carta_solar.overhang import apply_computed_mask, overhang_projection
+    from carta_solar.plot import build_output_basename, generate_carta_solar
+    from carta_solar.solar import estimate_timezone_utc
+except Exception:
+    # Streamlit Cloud redacta ImportError; mostramos el traceback real.
+    st.set_page_config(page_title="Carta Solar — error de importación", layout="centered")
+    st.error("No se pudo importar el paquete `carta_solar`. Detalle técnico:")
+    st.code(traceback.format_exc())
+    st.stop()
 
 WEB_FIGSIZE = (12.0, 6.0)
 WEB_DISPLAY_DPI = 120

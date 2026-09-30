@@ -27,8 +27,11 @@ from carta_solar.critical import (
     format_exposure_report,
 )
 from carta_solar.devices.vertical_fin import (
-    compute_vertical_fin_design,
+    NEAR_NORMAL_DEG,
+    describe_fin_design,
     find_unprotected_by_fin,
+    fin_depth_from_angle,
+    suggested_critical_hours,
 )
 from carta_solar.overhang import apply_computed_mask, overhang_projection
 from carta_solar.plot import build_output_basename, generate_carta_solar
@@ -251,13 +254,12 @@ def _sidebar_state() -> AppState:
         fin_arrangement = "bilateral" if arr.startswith("Ambos") else "single"
 
     default_months = sorted(default_critical_months_for_lat(float(lat)))
-    # Horas sugeridas E/O
-    if abs(((facade_override - 90) + 180) % 360 - 180) <= 45:
-        def_h1, def_h2 = 7, 12
-    elif abs(((facade_override - 270) + 180) % 360 - 180) <= 45:
-        def_h1, def_h2 = 12, 18
-    else:
-        def_h1, def_h2 = 10, 18
+    def_h1, def_h2 = suggested_critical_hours(facade_override)
+    facade_hours_key = round(float(facade_override), 1)
+    if st.session_state.get("_crit_hours_facade") != facade_hours_key:
+        st.session_state["crit_hour_start"] = def_h1
+        st.session_state["crit_hour_end"] = def_h2
+        st.session_state["_crit_hours_facade"] = facade_hours_key
 
     st.sidebar.header("Período crítico")
     st.sidebar.caption(
@@ -273,11 +275,19 @@ def _sidebar_state() -> AppState:
     crit_h1, crit_h2 = st.sidebar.columns(2)
     with crit_h1:
         critical_hour_start = st.number_input(
-            "Hora crítica inicio", value=def_h1, min_value=0, max_value=23, step=1
+            "Hora crítica inicio",
+            min_value=0,
+            max_value=23,
+            step=1,
+            key="crit_hour_start",
         )
     with crit_h2:
         critical_hour_end = st.number_input(
-            "Hora crítica fin", value=def_h2, min_value=1, max_value=23, step=1
+            "Hora crítica fin",
+            min_value=1,
+            max_value=23,
+            step=1,
+            key="crit_hour_end",
         )
     highlight_critical_period = st.sidebar.checkbox(
         "Resaltar período crítico en carta", value=True
@@ -338,16 +348,37 @@ def _build_report(config: CartaSolarConfig) -> tuple[str, float | None, float | 
         timezone_utc_hours=config.timezone_utc_offset,
     )
     if config.device_mode == DEVICE_VERTICAL_FIN:
-        beta, depth, month = compute_vertical_fin_design(config)
+        design = describe_fin_design(config)
+        beta = design.beta_deg
+        bilateral = config.fin_arrangement != "single"
+        depth = fin_depth_from_angle(
+            config.window_width_m, beta, bilateral=bilateral
+        )
+        month = design.limiting_month
         unprotected = find_unprotected_by_fin(samples, beta, config.facade_azimuth)
         total = len(samples)
         covered = total - len(unprotected)
         pct = 100.0 * covered / total if total else 0.0
         report = (
-            f"β = {beta:g}° (mín. |γ| del período crítico, mes "
-            f"{MONTH_NAMES.get(month or 0, '—')}).\n"
-            f"Rango horario {total} posiciones: {covered}/{total} bajo aletas ({pct:.0f}%).\n"
+            f"β = {beta:.1f}° (percentil P{design.percentile:g} de |γ|, "
+            f"mes {MONTH_NAMES.get(month or 0, '—')}).\n"
         )
+        if design.beta_left_deg is not None or design.beta_right_deg is not None:
+            bl = f"{design.beta_left_deg:.1f}°" if design.beta_left_deg is not None else "—"
+            br = f"{design.beta_right_deg:.1f}°" if design.beta_right_deg is not None else "—"
+            report += f"β izq/der (ref. SOL-AR): {bl} / {br}.\n"
+        if design.capped_by_max_depth:
+            report += "β limitado por profundidad máxima constructiva.\n"
+        report += (
+            f"Rango horario {total} posiciones: {covered}/{total} bajo aletas ({pct:.0f}%).\n"
+            f"Sol casi normal (|γ| < {NEAR_NORMAL_DEG:g}°): {design.n_near_normal} "
+            f"de {design.n_frontal} frontales — no sombreable solo con aletas.\n"
+        )
+        if design.n_near_normal > 0 and design.n_near_normal >= 0.25 * max(design.n_frontal, 1):
+            report += (
+                "Aviso: mucha insolación frontal; considerá combinar con alero "
+                "u otro dispositivo (flujo típico SOL-AR).\n"
+            )
         if not unprotected:
             report += "Período horario completamente cubierto (criterio |γ| ≥ β)."
         else:

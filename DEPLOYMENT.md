@@ -37,8 +37,8 @@ Actualizá las URLs en `CITATION.cff` y `README.md` con tu usuario real.
 6. El DOI de concepto se mantiene; actualizá `CITATION.cff` y `README.md` si Zenodo emite un DOI de versión nuevo
 
 **DOI de concepto:** [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118)  
-**DOI de versión v1.1.0:** [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955)  
-**DOI de versión v1.1.1:** se asigna al publicar el tag (actualizar aquí tras Zenodo).
+**DOI de versión v1.1.1:** [10.5281/zenodo.23050120](https://doi.org/10.5281/zenodo.23050120)  
+**DOI de versión v1.1.0:** [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955)
 
 ## 4. Desplegar app web (Streamlit Cloud, gratis)
 
@@ -67,7 +67,7 @@ streamlit run streamlit_app.py
   year         = {2026},
   publisher    = {Zenodo},
   version      = {1.1.1},
-  doi          = {10.5281/zenodo.20725118},
-  url          = {https://doi.org/10.5281/zenodo.20725118}
+  doi          = {10.5281/zenodo.23050120},
+  url          = {https://doi.org/10.5281/zenodo.23050120}
 }
 ```

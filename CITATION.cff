@@ -16,12 +16,15 @@ authors:
     name-particle: Dra.
     affiliation: "INAHE-CONICET"
 repository-code: "https://github.com/gbarea-INAHE/carta-solar"
-url: "https://doi.org/10.5281/zenodo.20725118"
-doi: 10.5281/zenodo.20725118
+url: "https://doi.org/10.5281/zenodo.23050120"
+doi: 10.5281/zenodo.23050120
 identifiers:
   - type: doi
+    value: 10.5281/zenodo.23050120
+    description: "This version (v1.1.1)"
+  - type: doi
     value: 10.5281/zenodo.20725118
-    description: "Concept DOI (all versions; resolves to latest)"
+    description: "Concept DOI (all versions)"
 keywords:
   - solar chart
   - stereographic projection

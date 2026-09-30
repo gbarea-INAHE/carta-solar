@@ -14,7 +14,7 @@ Herramienta de código abierto para generar **cartas solares estereográficas** 
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |
 | **DOI Zenodo (concepto)** | [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118) |
-| **DOI Zenodo (v1.1.0)** | [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955) |
+| **DOI Zenodo (v1.1.1)** | [10.5281/zenodo.23050120](https://doi.org/10.5281/zenodo.23050120) |
 
 **Repositorio de desarrollo:** [github.com/gbarea-INAHE/carta-solar](https://github.com/gbarea-INAHE/carta-solar)
 
@@ -54,7 +54,7 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
 
 **APA (7.ª ed.)**
 
-> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.1) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725118
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.1) [Software]. Zenodo. https://doi.org/10.5281/zenodo.23050120
 
 **BibTeX**
 
@@ -65,12 +65,10 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
   year         = {2026},
   publisher    = {Zenodo},
   version      = {1.1.1},
-  doi          = {10.5281/zenodo.20725118},
-  url          = {https://doi.org/10.5281/zenodo.20725118}
+  doi          = {10.5281/zenodo.23050120},
+  url          = {https://doi.org/10.5281/zenodo.23050120}
 }
 ```
-
-> Tras el release, Zenodo asigna un DOI de versión; actualizá la citación con ese DOI si necesitás fijar exactamente v1.1.1.
 
 Metadatos adicionales en [CITATION.cff](CITATION.cff). Historial de versiones en [CHANGELOG.md](CHANGELOG.md).
 
@@ -97,7 +95,7 @@ La fachada se elige automáticamente: **Norte** si lat < 0, **Sur** si lat ≥ 0
 Instrucciones completas en **[DEPLOYMENT.md](DEPLOYMENT.md)**:
 
 1. Push a GitHub público
-2. Release en GitHub → archivo persistente y DOI en Zenodo ([v1.1.0](https://doi.org/10.5281/zenodo.23049955); [concepto](https://doi.org/10.5281/zenodo.20725118))
+2. Release en GitHub → archivo persistente y DOI en Zenodo ([v1.1.1](https://doi.org/10.5281/zenodo.23050120); [concepto](https://doi.org/10.5281/zenodo.20725118))
 3. App web en [Streamlit Cloud](https://carta-solar.streamlit.app/)
 
 ## Tests

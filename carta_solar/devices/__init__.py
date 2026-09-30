@@ -9,6 +9,9 @@ from carta_solar.devices.vertical_fin import (
     apply_vertical_fin_design,
     compute_vertical_fin_design,
     describe_fin_design,
+    design_short_fins,
+    design_short_fins_from_config,
+    format_architect_fin_report,
     suggested_critical_hours,
 )
 
@@ -19,5 +22,8 @@ __all__ = [
     "apply_vertical_fin_design",
     "compute_vertical_fin_design",
     "describe_fin_design",
+    "design_short_fins",
+    "design_short_fins_from_config",
+    "format_architect_fin_report",
     "suggested_critical_hours",
 ]

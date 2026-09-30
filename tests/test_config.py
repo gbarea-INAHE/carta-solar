@@ -79,3 +79,12 @@ def test_resolved_timezone_explicit_and_estimated():
     estimated = CartaSolarConfig(lon=-45.0, timezone_utc_offset=None)
     assert explicit.resolved_timezone_utc == -3.0
     assert estimated.resolved_timezone_utc == -3.0
+
+
+def test_fin_depth_default_and_validation():
+    cfg = CartaSolarConfig()
+    assert cfg.fin_depth_m == pytest.approx(0.50)
+    with pytest.raises(ValueError, match="profundidad"):
+        CartaSolarConfig(fin_depth_m=0.0)
+    with pytest.raises(ValueError, match="aletas"):
+        CartaSolarConfig(fin_count=1)

@@ -5,6 +5,24 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.3.0] - 2026-09-30
+
+### Changed
+
+- Parasol vertical rediseñado para **aletas cortas de obra**: el resultado principal
+  es el paquete (N, D, S, rotación), no una aleta profunda D≈2 m por percentil de |γ|.
+- UI Streamlit: input «Profundidad de cada aleta (m)» (0,15–1,20; default 0,50) y
+  métricas N / S / D / rotación. El ángulo de corte en planta queda como dato técnico.
+- Planta esquemática: muro, vano, banco de aletas repetidas con cotas S/D y flecha de rotación.
+- Informe de cobertura coloquial para arquitectos (`format_architect_fin_report`).
+
+### Added
+
+- Fórmulas documentadas: `tan(φ) = S/D`, `N = ceil(W/S_max)+1`, `S = W/(N−1)`,
+  rotación = mediana(γ) acotada a ±45°.
+- `fin_depth_m` / `fin_spacing_m` / `fin_count` / `fin_rotation_deg` en config.
+- Tests de N/S/D/rotación e informe.
+
 ## [1.2.2] - 2026-09-30
 
 ### Fixed

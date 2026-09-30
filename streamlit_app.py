@@ -38,10 +38,10 @@ try:
         format_exposure_report,
     )
     from carta_solar.devices.vertical_fin import (
-        NEAR_NORMAL_DEG,
+        DEFAULT_FIN_DEPTH_M,
         describe_fin_design,
         find_unprotected_by_fin,
-        fin_depth_from_angle,
+        format_architect_fin_report,
         suggested_critical_hours,
     )
     from carta_solar.overhang import apply_computed_mask, overhang_projection
@@ -88,6 +88,7 @@ class AppState:
     device_mode: str = DEVICE_OVERHANG
     facade_azimuth_override: float | None = None
     fin_arrangement: str = "bilateral"
+    fin_depth_m: float = DEFAULT_FIN_DEPTH_M
 
 
 def build_config_from_state(
@@ -124,6 +125,7 @@ def build_config_from_state(
         device_mode=state.device_mode,
         facade_azimuth_override=state.facade_azimuth_override,
         fin_arrangement=state.fin_arrangement,
+        fin_depth_m=state.fin_depth_m,
         **web_kwargs,
     )
 
@@ -177,6 +179,7 @@ def _default_state() -> AppState:
         device_mode=DEVICE_OVERHANG,
         facade_azimuth_override=None,
         fin_arrangement="bilateral",
+        fin_depth_m=DEFAULT_FIN_DEPTH_M,
     )
 
 
@@ -266,9 +269,27 @@ def _sidebar_state() -> AppState:
         disabled=device_mode != DEVICE_VERTICAL_FIN,
     )
     fin_arrangement = "bilateral"
+    fin_depth_m = DEFAULT_FIN_DEPTH_M
     if device_mode == DEVICE_VERTICAL_FIN:
-        arr = st.sidebar.radio("Disposición de aletas", ["Ambos lados", "Un solo lado"], index=0)
-        fin_arrangement = "bilateral" if arr.startswith("Ambos") else "single"
+        fin_depth_m = st.sidebar.number_input(
+            "Profundidad de cada aleta (m)",
+            value=float(DEFAULT_FIN_DEPTH_M),
+            min_value=0.15,
+            max_value=1.20,
+            step=0.05,
+            help="Proyección fija desde el plano de fachada (obra). "
+            "El programa calcula cuántas aletas y a qué separación.",
+        )
+        arr = st.sidebar.radio(
+            "Disposición de aletas",
+            ["Banco en todo el vano", "Un solo lado (legado)"],
+            index=0,
+            help="El diseño principal es un banco de aletas cortas en todo el ancho.",
+        )
+        fin_arrangement = "bilateral" if arr.startswith("Banco") else "single"
+        st.sidebar.caption(
+            "Se calcula la cantidad N y la separación S para la profundidad D elegida."
+        )
 
     default_months = sorted(default_critical_months_for_lat(float(lat)))
     def_h1, def_h2 = suggested_critical_hours(facade_override)
@@ -343,6 +364,7 @@ def _sidebar_state() -> AppState:
         device_mode=device_mode,
         facade_azimuth_override=facade_override,
         fin_arrangement=fin_arrangement,
+        fin_depth_m=float(fin_depth_m),
     )
 
 
@@ -366,43 +388,13 @@ def _build_report(config: CartaSolarConfig) -> tuple[str, float | None, float | 
     )
     if config.device_mode == DEVICE_VERTICAL_FIN:
         design = describe_fin_design(config)
-        beta = design.beta_deg
-        bilateral = config.fin_arrangement != "single"
-        depth = fin_depth_from_angle(
-            config.window_width_m, beta, bilateral=bilateral
+        unprotected = find_unprotected_by_fin(
+            samples, design.cut_angle_deg, config.facade_azimuth
         )
-        month = design.limiting_month
-        unprotected = find_unprotected_by_fin(samples, beta, config.facade_azimuth)
-        total = len(samples)
-        covered = total - len(unprotected)
-        pct = 100.0 * covered / total if total else 0.0
-        report = (
-            f"β = {beta:.1f}° (percentil P{design.percentile:g} de |γ|, "
-            f"mes {MONTH_NAMES.get(month or 0, '—')}).\n"
+        report = format_architect_fin_report(
+            config, design, unprotected=unprotected
         )
-        if design.beta_left_deg is not None or design.beta_right_deg is not None:
-            bl = f"{design.beta_left_deg:.1f}°" if design.beta_left_deg is not None else "—"
-            br = f"{design.beta_right_deg:.1f}°" if design.beta_right_deg is not None else "—"
-            report += f"β izq/der (ref. SOL-AR): {bl} / {br}.\n"
-        if design.capped_by_max_depth:
-            report += "β limitado por profundidad máxima constructiva.\n"
-        report += (
-            f"Rango horario {total} posiciones: {covered}/{total} bajo aletas ({pct:.0f}%).\n"
-            f"Sol casi normal (|γ| < {NEAR_NORMAL_DEG:g}°): {design.n_near_normal} "
-            f"de {design.n_frontal} frontales — no sombreable solo con aletas.\n"
-        )
-        if design.n_near_normal > 0 and design.n_near_normal >= 0.25 * max(design.n_frontal, 1):
-            report += (
-                "Aviso: mucha insolación frontal; considerá combinar con alero "
-                "u otro dispositivo (flujo típico SOL-AR).\n"
-            )
-        if not unprotected:
-            report += "Período horario completamente cubierto (criterio |γ| ≥ β)."
-        else:
-            report += "Posiciones fuera de aletas (sol expuesto):\n"
-            for s in unprotected[:8]:
-                report += f"  • {s.label()}\n"
-        return report, beta, depth, month
+        return report, design.cut_angle_deg, design.depth_m, design.limiting_month
 
     alpha, samples2, month = compute_required_alpha(
         config.lat,
@@ -474,6 +466,12 @@ def main() -> None:
             st.session_state["report"] = report
             st.session_state["metric_angle"] = angle
             st.session_state["metric_depth"] = depth
+            if config.device_mode == DEVICE_VERTICAL_FIN:
+                fin_design = describe_fin_design(config)
+                st.session_state["fin_n"] = fin_design.n_fins
+                st.session_state["fin_s"] = fin_design.spacing_m
+                st.session_state["fin_rot"] = fin_design.rotation_deg
+                st.session_state["fin_cut"] = fin_design.cut_angle_deg
             st.session_state["app_state"] = state
             st.session_state.pop("png_bytes", None)
         except ValueError as exc:
@@ -494,14 +492,26 @@ def main() -> None:
     depth = st.session_state.get("metric_depth")
 
     if config.device_mode == DEVICE_VERTICAL_FIN:
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Ángulo β (°)", f"{angle:.1f}" if angle else "—")
-        m2.metric("Profundidad D (m)", f"{depth:.3f}" if depth else "—")
-        m3.metric("Ancho W (m)", f"{config.window_width_m:.2f}")
-        m4.metric("Fachada", f"{config.facade_label} ({config.facade_azimuth:g}°)")
+        n_fins = st.session_state.get("fin_n") or config.fin_count
+        spacing = st.session_state.get("fin_s") or config.fin_spacing_m
+        rotation = st.session_state.get("fin_rot", config.fin_rotation_deg)
+        cut = st.session_state.get("fin_cut") or angle
+        m1, m2, m3, m4, m5 = st.columns(5)
+        m1.metric("Cantidad N", f"{n_fins}" if n_fins else "—")
+        m2.metric(
+            "Separación S",
+            f"{spacing * 100:.0f} cm" if spacing else "—",
+        )
+        m3.metric("Profundidad D (m)", f"{depth:.2f}" if depth else "—")
+        m4.metric("Rotación", f"{rotation:+.0f}°" if rotation is not None else "—")
+        m5.metric("Fachada", f"{config.facade_label}")
         st.caption(
-            "Parasol vertical: dimensiona aletas para cortar el sol con |γ| ≥ β. "
-            "Ideal en Este/Oeste; el alero solo ayuda con sol alto frente a la fachada."
+            f"Parasol vertical de aletas cortas: N parasoles de proyección D, "
+            f"separados S entre centros, rotados sobre su eje. "
+            f"Ángulo de corte en planta ≈ {cut:.1f}° (dato técnico). "
+            "Ideal en Este/Oeste."
+            if cut
+            else "Parasol vertical de aletas cortas. Ideal en Este/Oeste."
         )
     else:
         m1, m2, m3, m4 = st.columns(4)

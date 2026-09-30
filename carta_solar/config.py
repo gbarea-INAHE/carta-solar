@@ -32,6 +32,12 @@ class CartaSolarConfig:
     window_height_m: float = 1.2
     gap_to_overhang_m: float = 0.3
     window_width_m: float = 1.5
+    # Profundidad fija de cada aleta corta (m); rango típico de obra 0,15–1,20.
+    fin_depth_m: float = 0.50
+    # Resultados del banco (rellenados al calcular); opcionales en la entrada.
+    fin_spacing_m: float | None = None
+    fin_count: int | None = None
+    fin_rotation_deg: float = 0.0
     critical_months: frozenset[int] = field(
         default_factory=lambda: frozenset(_DEFAULT_CRITICAL_MONTHS)
     )
@@ -43,7 +49,7 @@ class CartaSolarConfig:
     # None → default por lat (fachada ecuatorial).
     facade_azimuth_override: float | None = None
     device_mode: str = DEVICE_OVERHANG
-    # bilateral | single
+    # bilateral | single (legado; el banco corto cubre el vano completo)
     fin_arrangement: str = "bilateral"
     # full (export) | preview (UI rápida)
     chart_detail: str = "full"
@@ -106,7 +112,9 @@ class CartaSolarConfig:
         if self.mask_alt is not None and not 0 < self.mask_alt < 90:
             raise ValueError("El ángulo α calculado debe estar entre 0° y 90°.")
         if self.mask_fin_angle is not None and not 0 < self.mask_fin_angle < 90:
-            raise ValueError("El ángulo β de aletas debe estar entre 0° y 90°.")
+            raise ValueError(
+                "El ángulo de corte en planta de aletas debe estar entre 0° y 90°."
+            )
         if self.protractor_step <= 0 or self.protractor_step >= 90:
             raise ValueError("El paso del transportador debe estar entre 1° y 89°.")
         if self.hour_start >= self.hour_end:
@@ -123,6 +131,16 @@ class CartaSolarConfig:
             raise ValueError("El vano hasta el alero no puede ser negativo.")
         if self.window_width_m <= 0:
             raise ValueError("El ancho de ventana debe ser mayor que 0.")
+        if self.fin_depth_m <= 0:
+            raise ValueError("La profundidad de cada aleta debe ser mayor que 0.")
+        if not 0.05 <= self.fin_depth_m <= 3.0:
+            raise ValueError("La profundidad de aleta debe estar entre 0,05 m y 3 m.")
+        if self.fin_spacing_m is not None and self.fin_spacing_m <= 0:
+            raise ValueError("La separación entre aletas debe ser mayor que 0.")
+        if self.fin_count is not None and self.fin_count < 2:
+            raise ValueError("Se necesitan al menos 2 aletas.")
+        if not -90.0 <= self.fin_rotation_deg <= 90.0:
+            raise ValueError("La rotación de aletas debe estar entre −90° y 90°.")
         if not self.critical_months:
             raise ValueError("Seleccioná al menos un mes del período crítico.")
         if not all(1 <= m <= 12 for m in self.critical_months):

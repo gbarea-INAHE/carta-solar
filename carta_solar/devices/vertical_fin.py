@@ -426,11 +426,14 @@ def design_short_fins(
         angle.signed_gammas, max_abs_deg=max_rotation_deg
     )
 
-    # Cobertura con el φ efectivo del banco (no el de una sola aleta profunda).
-    frontal_phis = [
-        abs(g) for g in angle.signed_gammas if abs(g) <= 90.0 + 1e-9
-    ]
-    if frontal_phis:
+    # Cobertura con el φ efectivo del banco, sobre posiciones oblicuas
+    # (las casi normales no son sombreables solo con aletas).
+    usable = [abs(g) for g in angle.signed_gammas if abs(g) >= near_normal_deg]
+    frontal_phis = [abs(g) for g in angle.signed_gammas if abs(g) <= 90.0 + 1e-9]
+    if usable:
+        covered = sum(1 for phi in usable if phi + 1e-6 >= cut)
+        coverage = covered / len(usable)
+    elif frontal_phis:
         covered = sum(1 for phi in frontal_phis if phi + 1e-6 >= cut)
         coverage = covered / len(frontal_phis)
     else:
@@ -598,8 +601,9 @@ def format_architect_fin_report(
         (
             f"Ángulo de corte en planta del banco: {_fmt_es(design.cut_angle_deg, 1)}° "
             f"(separación S = D·tan φ). "
-            f"Cobertura estimada del período: {100.0 * design.coverage_frac:.0f}% "
-            f"de las posiciones solares frontales."
+            f"Cobertura de las posiciones oblicuas del período: "
+            f"{100.0 * design.coverage_frac:.0f}% "
+            f"(excluye sol casi de frente)."
         ),
     ]
     if design.n_near_normal > 0:

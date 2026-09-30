@@ -18,8 +18,10 @@ from carta_solar.critical import (
     is_in_front_of_facade,
 )
 from carta_solar.devices.vertical_fin import (
+    cut_angle_from_spacing,
+    design_short_fins_from_config,
     find_unprotected_by_fin,
-    fin_depth_from_angle,
+    spacing_from_count,
 )
 from carta_solar.devices.overhang import overhang_projection
 from carta_solar.solar import solar_alt_az, solar_alt_az_at_clock, xy_from_alt_az
@@ -169,49 +171,182 @@ def draw_overhang_section(ax: Axes, config: CartaSolarConfig) -> None:
 
 
 def draw_vertical_fin_plan(ax: Axes, config: CartaSolarConfig) -> None:
-    """Planta esquemática: muro, vano y aletas verticales."""
+    """
+    Planta esquemática para arquitectos: muro, vano y banco de aletas cortas
+    con separación, proyección D y flecha de rotación.
+    """
     ax.set_aspect("equal", adjustable="box")
     ax.axis("off")
-    title = f"Planta — fachada {config.facade_label} (aletas)"
+    title = f"Planta — fachada {config.facade_label} (aletas cortas)"
     w = config.window_width_m
-    beta = config.mask_fin_angle
 
-    if beta is None:
+    if config.mask_fin_angle is None and config.fin_count is None:
         ax.set_xlim(-0.5, 2.5)
         ax.set_ylim(-0.5, 2.0)
-        ax.text(1.0, 0.7, "Calcular aletas", ha="center", va="center", fontsize=11, color="#666666")
+        ax.text(
+            1.0,
+            0.7,
+            "Calcular aletas",
+            ha="center",
+            va="center",
+            fontsize=11,
+            color="#666666",
+        )
         ax.set_title(title, fontsize=10, pad=8)
         return
 
-    bilateral = config.fin_arrangement != "single"
-    depth = fin_depth_from_angle(w, beta, bilateral=bilateral)
-    wall_t = 0.12
-    margin = max(depth, w) * 0.35
-    ax.set_xlim(-margin - wall_t, w + margin)
-    ax.set_ylim(-margin, depth + margin)
+    if config.fin_count is not None and config.fin_spacing_m is not None:
+        n_fins = config.fin_count
+        spacing = config.fin_spacing_m
+        depth = config.fin_depth_m
+        rotation = config.fin_rotation_deg
+        cut = cut_angle_from_spacing(depth, spacing)
+    else:
+        design = design_short_fins_from_config(config)
+        n_fins = design.n_fins
+        spacing = design.spacing_m
+        depth = design.depth_m
+        rotation = design.rotation_deg
+        cut = design.cut_angle_deg
 
-    # Muro
-    ax.add_patch(Rectangle((-wall_t, -0.05), wall_t, 0.1, facecolor="#888888", edgecolor="#333333"))
-    ax.add_patch(Rectangle((w, -0.05), wall_t, 0.1, facecolor="#888888", edgecolor="#333333"))
-    # Vano
-    ax.plot([0, w], [0, 0], color="#2266AA", linewidth=3)
-    # Aletas
-    ax.plot([0, 0], [0, depth], color="#555555", linewidth=4, solid_capstyle="butt")
-    if bilateral:
-        ax.plot([w, w], [0, depth], color="#555555", linewidth=4, solid_capstyle="butt")
-    # Ángulo β
-    arc = np.linspace(0, math.radians(beta), 24)
-    r = min(depth, w / 2) * 0.45
-    ax.plot(r * np.sin(arc), r * np.cos(arc), color="#CC0000", linewidth=1.4)
-    ax.text(r * 0.7, r * 0.55, f"β = {beta:.1f}°", color="#CC0000", fontsize=9)
-    ax.text(w / 2, -margin * 0.45, f"W = {w:g} m", ha="center", fontsize=8)
+    wall_t = 0.12
+    # Extensión lateral por rotación de aletas
+    rot_rad = math.radians(rotation)
+    fin_extent_x = abs(depth * math.sin(rot_rad)) + 0.08
+    margin_x = max(spacing * 0.35, fin_extent_x, 0.25)
+    margin_y = max(depth * 0.45, 0.25)
+    ax.set_xlim(-margin_x - wall_t, w + margin_x + wall_t)
+    ax.set_ylim(-margin_y, depth + margin_y)
+
+    # Muro (tramos laterales al vano)
+    wall_y0, wall_y1 = -0.06, 0.06
+    ax.add_patch(
+        Rectangle(
+            (-wall_t - margin_x * 0.5, wall_y0),
+            wall_t + margin_x * 0.5,
+            wall_y1 - wall_y0,
+            facecolor="#888888",
+            edgecolor="#333333",
+        )
+    )
+    ax.add_patch(
+        Rectangle(
+            (w, wall_y0),
+            wall_t + margin_x * 0.5,
+            wall_y1 - wall_y0,
+            facecolor="#888888",
+            edgecolor="#333333",
+        )
+    )
+    # Línea de fachada / vano
+    ax.plot([0, w], [0, 0], color="#2266AA", linewidth=3, solid_capstyle="butt")
+    ax.text(w / 2, -margin_y * 0.55, f"W = {w:g} m", ha="center", fontsize=8)
+
+    # Posiciones de centros (jambas + intermedias)
+    if n_fins < 2:
+        n_fins = 2
+        spacing = spacing_from_count(w, n_fins)
+    xs = [i * spacing for i in range(n_fins)]
+    # Ajuste numérico: última aleta en el jamba derecho
+    xs[-1] = w
+
+    cos_r = math.cos(rot_rad)
+    sin_r = math.sin(rot_rad)
+    for x0 in xs:
+        # Aleta: desde el plano de fachada hacia afuera, rotada θ sobre su eje
+        x1 = x0 + depth * sin_r
+        y1 = depth * cos_r
+        # Si la rotación hace que y1 sea negativo (θ≈±90), forzar saliente
+        if y1 < depth * 0.15:
+            y1 = depth * abs(cos_r) if abs(cos_r) > 0.15 else depth * 0.15
+            x1 = x0 + depth * sin_r
+        ax.plot(
+            [x0, x1],
+            [0.0, max(y1, depth * 0.2)],
+            color="#555555",
+            linewidth=3.2,
+            solid_capstyle="butt",
+            zorder=3,
+        )
+
+    # Cota de separación entre las dos primeras aletas
+    if n_fins >= 2 and spacing > 0.05:
+        s_y = -margin_y * 0.28
+        ax.annotate(
+            "",
+            xy=(xs[1], s_y),
+            xytext=(xs[0], s_y),
+            arrowprops=dict(arrowstyle="<->", color="#444444", lw=0.8),
+        )
+        ax.text(
+            (xs[0] + xs[1]) / 2,
+            s_y - margin_y * 0.08,
+            f"S = {spacing * 100:.0f} cm",
+            ha="center",
+            fontsize=8,
+            color="#333333",
+        )
+
+    # Cota de profundidad D
+    d_x = -margin_x * 0.55
+    tip_y = depth * abs(math.cos(rot_rad)) if abs(math.cos(rot_rad)) > 0.2 else depth * 0.85
+    ax.annotate(
+        "",
+        xy=(d_x, tip_y),
+        xytext=(d_x, 0.0),
+        arrowprops=dict(arrowstyle="<->", color="#444444", lw=0.8),
+    )
     ax.text(
-        -margin * 0.2 if not bilateral else w / 2,
-        depth + margin * 0.25,
-        f"D = {depth:.3f} m",
-        ha="center",
-        fontsize=9,
+        d_x - 0.02,
+        tip_y / 2,
+        f"D = {depth:.2f} m",
+        ha="right",
+        va="center",
+        fontsize=8,
         fontweight="bold",
+    )
+
+    # Flecha / arco de rotación sobre una aleta intermedia (o la primera)
+    pivot_i = min(1, n_fins - 1)
+    px = xs[pivot_i]
+    arc_r = min(depth, spacing) * 0.4
+    if abs(rotation) >= 0.5:
+        arc_t = np.linspace(0.0, rot_rad, 20)
+        ax.plot(
+            px + arc_r * np.sin(arc_t),
+            arc_r * np.cos(arc_t),
+            color="#CC0000",
+            linewidth=1.3,
+        )
+        ax.annotate(
+            "",
+            xy=(px + depth * 0.55 * sin_r, depth * 0.55 * abs(cos_r) + 0.02),
+            xytext=(px, depth * 0.55),
+            arrowprops=dict(arrowstyle="->", color="#CC0000", lw=1.2),
+        )
+        ax.text(
+            px + spacing * 0.15,
+            depth * 0.72,
+            f"rot. {rotation:+.0f}°",
+            color="#CC0000",
+            fontsize=8,
+        )
+    else:
+        ax.text(
+            px + spacing * 0.1,
+            depth * 0.55,
+            "0° (de canto)",
+            color="#666666",
+            fontsize=8,
+        )
+
+    ax.text(
+        w / 2,
+        depth + margin_y * 0.35,
+        f"N = {n_fins} aletas  ·  corte en planta ≈ {cut:.1f}°",
+        ha="center",
+        fontsize=8,
+        color="#333333",
     )
     ax.set_title(title, fontsize=10, pad=8)
 

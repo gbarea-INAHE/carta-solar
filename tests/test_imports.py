@@ -56,6 +56,7 @@ def test_streamlit_app_import_chain():
     from carta_solar.devices.vertical_fin import (
         compute_vertical_fin_design,
         find_unprotected_by_fin,
+        format_architect_fin_report,
     )
     from carta_solar.overhang import apply_computed_mask, overhang_projection
     from carta_solar.plot import build_output_basename, generate_carta_solar
@@ -76,6 +77,7 @@ def test_streamlit_app_import_chain():
     assert callable(format_exposure_report)
     assert callable(compute_vertical_fin_design)
     assert callable(find_unprotected_by_fin)
+    assert callable(format_architect_fin_report)
     assert callable(apply_computed_mask)
     assert callable(overhang_projection)
     assert callable(build_output_basename)

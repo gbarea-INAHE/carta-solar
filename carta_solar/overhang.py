@@ -34,6 +34,9 @@ def compute_overhang_from_config(config: CartaSolarConfig) -> tuple[float, float
         config.critical_hour_start,
         config.critical_hour_end,
         facade_az=config.facade_azimuth,
+        lon=config.lon,
+        use_civil_hours=config.use_civil_hours,
+        timezone_utc_hours=config.timezone_utc_offset,
     )
     if not 0 < alpha < 90:
         raise ValueError(

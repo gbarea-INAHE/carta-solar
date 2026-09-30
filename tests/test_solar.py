@@ -2,9 +2,13 @@ import pytest
 
 from carta_solar.solar import (
     alt_az_from_xy,
+    civil_to_solar_hour,
+    estimate_timezone_utc,
+    equation_of_time_minutes,
     profile_angle,
     r_from_alt,
     solar_alt_az,
+    solar_alt_az_at_clock,
     xy_from_alt_az,
 )
 
@@ -47,3 +51,29 @@ def test_alt_az_xy_inverse():
     alt, az = alt_az_from_xy(x, y)
     assert alt == pytest.approx(33.0, abs=1e-6)
     assert az == pytest.approx(215.0, abs=1e-6)
+
+
+def test_estimate_timezone_from_longitude():
+    # Estimación geográfica (el huso político se elige en la UI; AR = UTC−3).
+    assert estimate_timezone_utc(-67.9167) == -5.0
+    assert estimate_timezone_utc(-45.0) == -3.0
+    assert estimate_timezone_utc(0.0) == 0.0
+
+
+def test_civil_to_solar_west_of_standard_meridian():
+    # lon=-60, tz=-3 → lon_std=-45 → −1 h + EoT
+    day = 172
+    eot_h = equation_of_time_minutes(day) / 60.0
+    solar = civil_to_solar_hour(12.0, -60.0, day, timezone_utc_hours=-3.0)
+    assert solar == pytest.approx(12.0 - 1.0 + eot_h, abs=1e-6)
+
+
+def test_solar_alt_az_at_clock_civil_differs_from_solar():
+    lat, lon, day = -34.0, -67.9167, 80
+    alt_s, az_s = solar_alt_az_at_clock(lat, lon, day, 12.0, use_civil_hours=False)
+    alt_c, az_c = solar_alt_az_at_clock(
+        lat, lon, day, 12.0, use_civil_hours=True, timezone_utc_hours=-3.0
+    )
+    assert alt_s != pytest.approx(alt_c, abs=0.5)
+    # Con horas solares, mediodía ≈ az Norte
+    assert az_s == pytest.approx(0.0, abs=2.0)

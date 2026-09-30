@@ -30,14 +30,15 @@ Actualizá las URLs en `CITATION.cff` y `README.md` con tu usuario real.
 2. **Account → GitHub** → conectar y autorizar Zenodo
 3. En la lista de repositorios, activá **carta-solar**
 4. En GitHub, creá un **Release**:
-   - Tag: `v1.1.0`
-   - Título: `v1.1.0 — Ángulo de perfil y fachada ecuatorial`
+   - Tag: `v1.1.1`
+   - Título: `v1.1.1 — Horas civiles, CI y fix Streamlit`
    - Descripción breve del software
 5. Zenodo creará un registro en unos minutos y asignará un DOI de versión
 6. El DOI de concepto se mantiene; actualizá `CITATION.cff` y `README.md` si Zenodo emite un DOI de versión nuevo
 
 **DOI de concepto:** [10.5281/zenodo.20725118](https://doi.org/10.5281/zenodo.20725118)  
-**DOI de versión v1.1.0:** [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955)
+**DOI de versión v1.1.0:** [10.5281/zenodo.23049955](https://doi.org/10.5281/zenodo.23049955)  
+**DOI de versión v1.1.1:** se asigna al publicar el tag (actualizar aquí tras Zenodo).
 
 ## 4. Desplegar app web (Streamlit Cloud, gratis)
 
@@ -65,8 +66,8 @@ streamlit run streamlit_app.py
   title        = {Carta Solar --- Aleros},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.1.0},
-  doi          = {10.5281/zenodo.23049955},
-  url          = {https://doi.org/10.5281/zenodo.23049955}
+  version      = {1.1.1},
+  doi          = {10.5281/zenodo.20725118},
+  url          = {https://doi.org/10.5281/zenodo.20725118}
 }
 ```

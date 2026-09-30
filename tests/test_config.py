@@ -66,3 +66,10 @@ def test_site_name_truncated():
     long_name = "A" * 120
     config = CartaSolarConfig(site_name=long_name)
     assert len(config.site_name) == 80
+
+
+def test_resolved_timezone_explicit_and_estimated():
+    explicit = CartaSolarConfig(lon=-67.9167, timezone_utc_offset=-3.0)
+    estimated = CartaSolarConfig(lon=-45.0, timezone_utc_offset=None)
+    assert explicit.resolved_timezone_utc == -3.0
+    assert estimated.resolved_timezone_utc == -3.0

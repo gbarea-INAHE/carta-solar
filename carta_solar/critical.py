@@ -11,6 +11,7 @@ from carta_solar.solar import (
     profile_angle,
     signed_bearing_diff,
     solar_alt_az,
+    solar_alt_az_at_clock,
     xy_from_alt_az,
 )
 
@@ -164,6 +165,9 @@ def collect_critical_samples(
     *,
     hour_step: float = 0.5,
     facade_az: float | None = None,
+    lon: float = 0.0,
+    use_civil_hours: bool = False,
+    timezone_utc_hours: float | None = None,
 ) -> list[SolarSample]:
     """Muestrea posiciones solares del período crítico frente a la fachada."""
     if facade_az is None:
@@ -174,7 +178,14 @@ def collect_critical_samples(
     for month in sorted(months):
         day = MONTH_TO_DAY_OF_YEAR[month]
         for hour in hours:
-            alt, az = solar_alt_az(lat, day, float(hour))
+            alt, az = solar_alt_az_at_clock(
+                lat,
+                lon,
+                day,
+                float(hour),
+                use_civil_hours=use_civil_hours,
+                timezone_utc_hours=timezone_utc_hours,
+            )
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
@@ -229,6 +240,9 @@ def compute_required_alpha(
     hour_end: int,
     *,
     facade_az: float | None = None,
+    lon: float = 0.0,
+    use_civil_hours: bool = False,
+    timezone_utc_hours: float | None = None,
 ) -> tuple[float, list[SolarSample], int | None]:
     """
     α de diseño: mínimo ángulo de perfil ε sobre las muestras del período crítico.
@@ -238,7 +252,14 @@ def compute_required_alpha(
     if facade_az is None:
         facade_az = facade_azimuth_for_lat(lat)
     samples = collect_critical_samples(
-        lat, months, hour_start, hour_end, facade_az=facade_az
+        lat,
+        months,
+        hour_start,
+        hour_end,
+        facade_az=facade_az,
+        lon=lon,
+        use_civil_hours=use_civil_hours,
+        timezone_utc_hours=timezone_utc_hours,
     )
     if not samples:
         return 90.0, [], None

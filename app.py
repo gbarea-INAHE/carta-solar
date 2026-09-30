@@ -20,6 +20,7 @@ from carta_solar.critical import (
     format_exposure_report,
 )
 from carta_solar.overhang import apply_computed_mask, overhang_projection
+from carta_solar.solar import estimate_timezone_utc
 from carta_solar.plot import (
     build_output_basename,
     generate_carta_solar,
@@ -75,13 +76,15 @@ class CartaSolarApp(tk.Tk):
         self.alpha_result_var = tk.StringVar(value="—")
         self.overhang_depth_var = tk.StringVar(value="—")
         self.highlight_critical_var = tk.BooleanVar(value=True)
+        self.use_civil_hours_var = tk.BooleanVar(value=True)
+        self.timezone_utc_var = tk.StringVar(value="-3")
 
         loc = ttk.LabelFrame(form_frame, text="Ubicación", padding=8)
         loc.pack(fill=tk.X, pady=(0, 8))
         for label, var in [
             ("Nombre del sitio", self.site_name_var),
             ("Latitud (Sur = −)", self.lat_var),
-            ("Longitud (metadatos, O = −)", self.lon_var),
+            ("Longitud (Oeste = −)", self.lon_var),
         ]:
             row = ttk.Frame(loc)
             row.pack(fill=tk.X, pady=2)
@@ -91,7 +94,17 @@ class CartaSolarApp(tk.Tk):
         ttk.Label(loc, textvariable=self.facade_hint_var, font=("Segoe UI", 8)).pack(
             anchor=tk.W, pady=(4, 0)
         )
+        ttk.Checkbutton(
+            loc,
+            text="Horas civiles (reloj; usa lon + huso + EoT)",
+            variable=self.use_civil_hours_var,
+        ).pack(anchor=tk.W, pady=(4, 0))
+        row_tz = ttk.Frame(loc)
+        row_tz.pack(fill=tk.X, pady=2)
+        ttk.Label(row_tz, text="Huso UTC", width=22).pack(side=tk.LEFT)
+        ttk.Entry(row_tz, textvariable=self.timezone_utc_var, width=12).pack(side=tk.LEFT)
         self.lat_var.trace_add("write", lambda *_: self._update_facade_hint())
+        self.lon_var.trace_add("write", lambda *_: self._update_facade_hint())
 
         measures = ttk.LabelFrame(form_frame, text="Medidas en corte (m)", padding=8)
         measures.pack(fill=tk.X, pady=(0, 8))
@@ -204,10 +217,16 @@ class CartaSolarApp(tk.Tk):
     def _update_facade_hint(self) -> None:
         try:
             lat = float(self.lat_var.get().strip().replace(",", "."))
+            lon = float(self.lon_var.get().strip().replace(",", "."))
             label = facade_label_for_lat(lat)
             months = default_critical_months_for_lat(lat)
             month_txt = ", ".join(MONTH_NAMES[m] for m in sorted(months))
-            self.facade_hint_var.set(f"Fachada: {label}  ·  verano local: {month_txt}")
+            tz = estimate_timezone_utc(lon)
+            self.facade_hint_var.set(
+                f"Fachada: {label}  ·  verano: {month_txt}  ·  UTC{tz:+g} (est.)"
+            )
+            if not self.timezone_utc_var.get().strip():
+                self.timezone_utc_var.set(str(int(tz)))
         except ValueError:
             self.facade_hint_var.set("Fachada: —")
 
@@ -269,6 +288,9 @@ class CartaSolarApp(tk.Tk):
 
     def _parse_config(self) -> CartaSolarConfig:
         site = self.site_name_var.get().strip()[:SITE_NAME_MAX_LEN]
+        use_civil = self.use_civil_hours_var.get()
+        tz_raw = self.timezone_utc_var.get().strip().replace(",", ".")
+        tz = float(tz_raw) if use_civil and tz_raw else None
         return CartaSolarConfig(
             site_name=site,
             lat=float(self.lat_var.get().strip().replace(",", ".")),
@@ -283,6 +305,8 @@ class CartaSolarApp(tk.Tk):
             critical_hour_start=int(self.critical_hour_start_var.get().strip()),
             critical_hour_end=int(self.critical_hour_end_var.get().strip()),
             highlight_critical_period=self.highlight_critical_var.get(),
+            use_civil_hours=use_civil,
+            timezone_utc_offset=tz,
         )
 
     def _resolve_config_with_alpha(self) -> CartaSolarConfig:
@@ -304,6 +328,9 @@ class CartaSolarApp(tk.Tk):
             config.critical_hour_start,
             config.critical_hour_end,
             facade_az=config.facade_azimuth,
+            lon=config.lon,
+            use_civil_hours=config.use_civil_hours,
+            timezone_utc_hours=config.timezone_utc_offset,
         )
         text = format_exposure_report(
             samples,

@@ -1,6 +1,7 @@
 # Carta Solar — Aleros
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20725118.svg)](https://doi.org/10.5281/zenodo.20725118)
+[![CI](https://github.com/gbarea-INAHE/carta-solar/actions/workflows/ci.yml/badge.svg)](https://github.com/gbarea-INAHE/carta-solar/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Herramienta de código abierto para generar **cartas solares estereográficas** (transportador SOL-AR) y dimensionar **aleros horizontales en fachada ecuatorial** (Norte en hemisferio sur, Sur en hemisferio norte) a partir del período crítico de insolación y medidas en corte vertical. Incluye interfaz de escritorio (tkinter) y versión web (Streamlit).
@@ -8,7 +9,7 @@ Herramienta de código abierto para generar **cartas solares estereográficas** 
 | Campo | Valor |
 | --- | --- |
 | **Nombre** | Carta Solar — Aleros |
-| **Versión actual** | 1.1.0 |
+| **Versión actual** | 1.1.1 |
 | **Autores** | Gustavo Barea y Carolina Ganem |
 | **Institución** | INAHE-CONICET |
 | **Licencia** | [MIT](LICENSE) |
@@ -53,7 +54,7 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
 
 **APA (7.ª ed.)**
 
-> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.0) [Software]. Zenodo. https://doi.org/10.5281/zenodo.23049955
+> Barea, G., & Ganem, C. (2026). *Carta Solar — Aleros* (Version 1.1.1) [Software]. Zenodo. https://doi.org/10.5281/zenodo.20725118
 
 **BibTeX**
 
@@ -63,11 +64,13 @@ Si utilizás este software en trabajos académicos, informes o publicaciones ind
   title        = {Carta Solar --- Aleros},
   year         = {2026},
   publisher    = {Zenodo},
-  version      = {1.1.0},
-  doi          = {10.5281/zenodo.23049955},
-  url          = {https://doi.org/10.5281/zenodo.23049955}
+  version      = {1.1.1},
+  doi          = {10.5281/zenodo.20725118},
+  url          = {https://doi.org/10.5281/zenodo.20725118}
 }
 ```
+
+> Tras el release, Zenodo asigna un DOI de versión; actualizá la citación con ese DOI si necesitás fijar exactamente v1.1.1.
 
 Metadatos adicionales en [CITATION.cff](CITATION.cff). Historial de versiones en [CHANGELOG.md](CHANGELOG.md).
 
@@ -83,11 +86,11 @@ Metadatos adicionales en [CITATION.cff](CITATION.cff). Historial de versiones en
    - **Altura ventana** `h_v`
    - **Vano** `h_g`: cierre superior de ventana → inicio del alero
 2. Elegí meses y horas del **período crítico** (verano local: Nov–Mar en HS, May–Sep en HN).
-3. Pulsá **Calcular alero**: el programa toma **α = mínimo ángulo de perfil ε** sobre las muestras del período crítico frente a la fachada ecuatorial y calcula **P = (h_v + h_g) / tan(α)**.
+3. Pulsá **Calcular alero** (en la web la carta también se actualiza al cambiar parámetros): el programa toma **α = mínimo ángulo de perfil ε** sobre las muestras del período crítico frente a la fachada ecuatorial y calcula **P = (h_v + h_g) / tan(α)**.
 4. Revisá el **informe de cobertura**, la carta con transportador y el **diagrama en sección**.
 5. Guardá o descargá PNG/PDF.
 
-La fachada se elige automáticamente: **Norte** si lat < 0, **Sur** si lat ≥ 0. El antepecho `h_s` solo se usa en el dibujo en sección; no entra en el cálculo de α ni de P. La **longitud** se muestra como metadatos y no interviene en las horas solares.
+La fachada se elige automáticamente: **Norte** si lat < 0, **Sur** si lat ≥ 0. El antepecho `h_s` solo se usa en el dibujo en sección; no entra en el cálculo de α ni de P. Por defecto las horas son **civiles** (reloj): se convierten a solares con **longitud**, huso UTC y ecuación del tiempo (desactivable).
 
 ## Publicación (GitHub, Zenodo, web)
 

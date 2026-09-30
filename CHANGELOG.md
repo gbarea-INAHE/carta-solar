@@ -5,12 +5,18 @@ Todos los cambios notables de este proyecto se documentan en este archivo.
 El formato se basa en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
-## [Unreleased]
+## [1.1.1] - 2026-09-30
 
 ### Fixed
 
 - Streamlit: la carta se regenera al cambiar parámetros del formulario
   (antes quedaba congelada en `session_state` hasta pulsar el botón).
+
+### Added
+
+- Horas civiles (reloj) convertidas a solares con longitud, huso UTC y ecuación
+  del tiempo (`civil_to_solar_hour`); activable en las UIs.
+- CI GitHub Actions (`pytest` en Python 3.10 y 3.12).
 
 ## [1.1.0] - 2026-09-30
 
@@ -91,6 +97,7 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 - Interfaz web (`streamlit_app.py`, Streamlit).
 - Suite de tests con `pytest`.
 
+[1.1.1]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.4...v1.1.0
 [1.0.4]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.3...v1.0.4
 [1.0.3]: https://github.com/gbarea-INAHE/carta-solar/compare/v1.0.2...v1.0.3

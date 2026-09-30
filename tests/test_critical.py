@@ -139,3 +139,24 @@ def test_compute_required_alpha_no_samples_returns_90():
     assert alpha == 90.0
     assert samples == []
     assert month is None
+
+
+def test_civil_hours_shift_sample_geometry():
+    from carta_solar.critical import collect_critical_samples
+
+    lat, lon = -34.0333, -67.9167
+    months = frozenset({12})
+    solar = collect_critical_samples(lat, months, 12, 12)
+    civil = collect_critical_samples(
+        lat,
+        months,
+        12,
+        12,
+        lon=lon,
+        use_civil_hours=True,
+        timezone_utc_hours=-3.0,
+    )
+    assert solar and civil
+    # Misma hora de reloj 12: con lon oeste el sol civil no está en el meridiano.
+    assert solar[0].alt != pytest.approx(civil[0].alt, abs=0.5)
+    assert abs(solar[0].az - civil[0].az) > 5.0

@@ -21,6 +21,7 @@ from carta_solar.critical import (
 )
 from carta_solar.overhang import apply_computed_mask, overhang_projection
 from carta_solar.plot import build_output_basename, generate_carta_solar
+from carta_solar.solar import estimate_timezone_utc
 
 # Tamaño base de la figura; en pantalla se muestra al ~50% del ancho principal.
 WEB_FIGSIZE = (12.0, 6.0)
@@ -43,6 +44,8 @@ class AppState:
     hour_start: int
     hour_end: int
     highlight_critical_period: bool
+    use_civil_hours: bool = True
+    timezone_utc_offset: float | None = None
 
 
 def build_config_from_state(
@@ -68,6 +71,8 @@ def build_config_from_state(
         critical_hour_start=state.critical_hour_start,
         critical_hour_end=state.critical_hour_end,
         highlight_critical_period=state.highlight_critical_period,
+        use_civil_hours=state.use_civil_hours,
+        timezone_utc_offset=state.timezone_utc_offset,
         **web_kwargs,
     )
 
@@ -93,6 +98,8 @@ def _default_state() -> AppState:
         hour_start=5,
         hour_end=19,
         highlight_critical_period=True,
+        use_civil_hours=True,
+        timezone_utc_offset=-3.0,
     )
 
 
@@ -116,10 +123,28 @@ def _sidebar_state() -> AppState:
         min_value=-180.0,
         max_value=180.0,
         format="%.4f",
-        help="Solo metadatos / referencia; el cálculo usa horas solares.",
+        help="Se usa para convertir horas civiles → solares (huso + ecuación del tiempo).",
     )
     facade = facade_label_for_lat(float(lat))
-    st.sidebar.caption(f"Fachada ecuatorial automática: **{facade}**")
+    tz_geo = estimate_timezone_utc(float(lon))
+    st.sidebar.caption(
+        f"Fachada: **{facade}**  ·  huso geográfico aprox.: UTC{tz_geo:+g}"
+    )
+    use_civil_hours = st.sidebar.checkbox(
+        "Horas civiles (reloj local)",
+        value=True,
+        help="Si se desactiva, las horas se interpretan como solares.",
+    )
+    timezone_utc_offset = st.sidebar.number_input(
+        "Huso UTC (político)",
+        value=-3.0,
+        min_value=-12.0,
+        max_value=14.0,
+        step=1.0,
+        format="%.0f",
+        disabled=not use_civil_hours,
+        help="Ej.: Argentina continental = −3. No confundir con el huso geográfico.",
+    )
 
     st.sidebar.header("Medidas en corte (m)")
     sill_height_m = st.sidebar.number_input(
@@ -184,6 +209,8 @@ def _sidebar_state() -> AppState:
         hour_start=int(hour_start),
         hour_end=int(hour_end),
         highlight_critical_period=highlight_critical_period,
+        use_civil_hours=bool(use_civil_hours),
+        timezone_utc_offset=float(timezone_utc_offset) if use_civil_hours else None,
     )
 
 
@@ -262,6 +289,9 @@ def main() -> None:
                 config.critical_hour_start,
                 config.critical_hour_end,
                 facade_az=config.facade_azimuth,
+                lon=config.lon,
+                use_civil_hours=config.use_civil_hours,
+                timezone_utc_hours=config.timezone_utc_offset,
             )
             report = format_exposure_report(
                 samples,

@@ -1,6 +1,6 @@
 {
   "title": "Carta Solar — Aleros",
-  "description": "Herramienta de código abierto para generar cartas solares estereográficas (transportador SOL-AR) y dimensionar aleros horizontales en fachada ecuatorial (norte en hemisferio sur, sur en hemisferio norte) a partir del período crítico de insolación y medidas en corte vertical. El ángulo α de diseño es el mínimo ángulo de perfil ε del período crítico. Incluye interfaz de escritorio (tkinter) y versión web (Streamlit).",
+  "description": "Herramienta de código abierto para generar cartas solares estereográficas (transportador SOL-AR) y dimensionar aleros horizontales en fachada ecuatorial (norte en hemisferio sur, sur en hemisferio norte) a partir del período crítico de insolación y medidas en corte vertical. El ángulo α de diseño es el mínimo ángulo de perfil ε del período crítico. Las horas pueden ser civiles (reloj) con conversión por longitud, huso UTC y ecuación del tiempo. Incluye interfaz de escritorio (tkinter) y versión web (Streamlit).",
   "upload_type": "software",
   "publication_date": "2026-09-30",
   "creators": [

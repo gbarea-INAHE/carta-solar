@@ -12,7 +12,7 @@ from carta_solar.branding import add_figure_credit
 from carta_solar.config import CartaSolarConfig
 from carta_solar.format_utils import format_lat_lon, site_slug
 from carta_solar.mask import draw_protractor
-from carta_solar.solar import r_from_alt, solar_alt_az, xy_from_alt_az
+from carta_solar.solar import r_from_alt, solar_alt_az_at_clock, xy_from_alt_az
 
 REPRESENTATIVE_DAYS = {
     "21 Jun": 172,
@@ -137,7 +137,14 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
     for label, day in REPRESENTATIVE_DAYS.items():
         xs, ys = [], []
         for hour in hours:
-            alt, az = solar_alt_az(config.lat, day, hour)
+            alt, az = solar_alt_az_at_clock(
+                config.lat,
+                config.lon,
+                day,
+                hour,
+                use_civil_hours=config.use_civil_hours,
+                timezone_utc_hours=config.timezone_utc_offset,
+            )
             if alt > 0:
                 x, y = xy_from_alt_az(alt, az)
                 xs.append(x)
@@ -156,7 +163,14 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
     for hour in range(config.hour_start, config.hour_end):
         xs, ys = [], []
         for day in range(1, 366, 2):
-            alt, az = solar_alt_az(config.lat, day, hour)
+            alt, az = solar_alt_az_at_clock(
+                config.lat,
+                config.lon,
+                day,
+                hour,
+                use_civil_hours=config.use_civil_hours,
+                timezone_utc_hours=config.timezone_utc_offset,
+            )
             if alt > 0:
                 x, y = xy_from_alt_az(alt, az)
                 xs.append(x)
@@ -170,7 +184,14 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
             alpha=0.9,
             zorder=Z_HOUR_LINES,
         )
-        alt, az = solar_alt_az(config.lat, 80, hour)
+        alt, az = solar_alt_az_at_clock(
+            config.lat,
+            config.lon,
+            80,
+            hour,
+            use_civil_hours=config.use_civil_hours,
+            timezone_utc_hours=config.timezone_utc_offset,
+        )
         if alt > 0:
             x, y = xy_from_alt_az(alt, az)
             hour_label_points.append((x, y, str(hour)))
@@ -220,10 +241,13 @@ def _draw_solar_chart(ax: plt.Axes, config: CartaSolarConfig) -> None:
         _place_chart_label(ax, x, y, label, fontsize=9)
 
     lat_str, lon_str = format_lat_lon(config.lat, config.lon)
+    tz = config.resolved_timezone_utc
+    tz_txt = f"UTC{tz:+g}" if tz else "UTC"
+    hour_mode = f"horas civiles ({tz_txt})" if config.use_civil_hours else "horas solares"
     ax.text(
         0.0,
         -1.22,
-        f"{config.site_name}  ·  {lat_str}  {lon_str} (metadatos)  ·  fachada {config.facade_label}",
+        f"{config.site_name}  ·  {lat_str}  {lon_str}  ·  fachada {config.facade_label}  ·  {hour_mode}",
         ha="center",
         va="top",
         fontsize=7,

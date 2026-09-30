@@ -7,6 +7,7 @@ from carta_solar.critical import (
     facade_azimuth_for_lat,
     facade_label_for_lat,
 )
+from carta_solar.solar import estimate_timezone_utc
 
 SITE_NAME_MAX_LEN = 80
 
@@ -31,6 +32,10 @@ class CartaSolarConfig:
     critical_hour_start: int = 10
     critical_hour_end: int = 18
     highlight_critical_period: bool = True
+    # Si True, las horas del formulario son civiles (reloj) y se convierten con lon/EoT.
+    use_civil_hours: bool = False
+    # Offset UTC del huso civil; None = estimar desde lon (round(lon/15)).
+    timezone_utc_offset: float | None = None
 
     def __post_init__(self) -> None:
         self.output_dir = Path(self.output_dir)
@@ -47,6 +52,12 @@ class CartaSolarConfig:
     @property
     def facade_label(self) -> str:
         return facade_label_for_lat(self.lat)
+
+    @property
+    def resolved_timezone_utc(self) -> float:
+        if self.timezone_utc_offset is not None:
+            return float(self.timezone_utc_offset)
+        return estimate_timezone_utc(self.lon)
 
     @property
     def effective_shading_height_m(self) -> float:
@@ -88,6 +99,8 @@ class CartaSolarConfig:
             raise ValueError("La hora crítica de inicio debe ser menor que la de fin.")
         if not 0 <= self.critical_hour_start <= 23 or not 0 <= self.critical_hour_end <= 23:
             raise ValueError("Las horas críticas deben estar entre 0 y 23.")
+        if self.timezone_utc_offset is not None and not -12 <= self.timezone_utc_offset <= 14:
+            raise ValueError("El huso UTC debe estar entre −12 y +14.")
 
     @classmethod
     def default(cls) -> "CartaSolarConfig":

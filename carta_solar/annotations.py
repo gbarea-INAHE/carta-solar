@@ -18,7 +18,7 @@ from carta_solar.critical import (
     is_in_equatorial_sector,
 )
 from carta_solar.overhang import overhang_projection
-from carta_solar.solar import solar_alt_az, xy_from_alt_az
+from carta_solar.solar import solar_alt_az, solar_alt_az_at_clock, xy_from_alt_az
 
 CRITICAL_PATH_COLOR = "#CC0000"
 CRITICAL_PATH_WIDTH = 2.2
@@ -165,7 +165,14 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
         day = MONTH_TO_DAY_OF_YEAR[month]
         path_points: list[tuple[float, float]] = []
         for hour in hours:
-            alt, az = solar_alt_az(config.lat, day, float(hour))
+            alt, az = solar_alt_az_at_clock(
+                config.lat,
+                config.lon,
+                day,
+                float(hour),
+                use_civil_hours=config.use_civil_hours,
+                timezone_utc_hours=config.timezone_utc_offset,
+            )
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)
@@ -189,6 +196,7 @@ def draw_critical_months_highlight(ax: Axes, config: CartaSolarConfig) -> None:
         )
         ax.add_patch(patch)
 
+        # Marcador de mediodía solar verdadero (hora solar 12).
         alt_noon, az_noon = solar_alt_az(config.lat, day, 12.0)
         if alt_noon > 0:
             x_n, y_n = xy_from_alt_az(alt_noon, az_noon)
@@ -229,6 +237,9 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
         config.critical_hour_start,
         config.critical_hour_end,
         facade_az=facade_az,
+        lon=config.lon,
+        use_civil_hours=config.use_civil_hours,
+        timezone_utc_hours=config.timezone_utc_offset,
     )
     if not samples:
         return
@@ -245,7 +256,14 @@ def draw_critical_overlays(ax: Axes, config: CartaSolarConfig) -> None:
         day = MONTH_TO_DAY_OF_YEAR[month]
         xs, ys = [], []
         for hour in hours:
-            alt, az = solar_alt_az(config.lat, day, float(hour))
+            alt, az = solar_alt_az_at_clock(
+                config.lat,
+                config.lon,
+                day,
+                float(hour),
+                use_civil_hours=config.use_civil_hours,
+                timezone_utc_hours=config.timezone_utc_offset,
+            )
             if alt <= 0:
                 continue
             x, y = xy_from_alt_az(alt, az)

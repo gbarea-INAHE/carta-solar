@@ -7,6 +7,36 @@ def declination(day: int | float) -> float:
     return 23.45 * np.sin(np.radians(360 * (284 + day) / 365.0))
 
 
+def equation_of_time_minutes(day: int | float) -> float:
+    """Ecuación del tiempo (minutos): solar − civil media, aproximación clásica."""
+    b = radians(360.0 * (float(day) - 81.0) / 365.0)
+    return 9.87 * sin(2 * b) - 7.53 * cos(b) - 1.5 * sin(b)
+
+
+def estimate_timezone_utc(lon_deg: float) -> float:
+    """Offset UTC estimado por huso geográfico (múltiplos de 15°)."""
+    return float(round(lon_deg / 15.0))
+
+
+def civil_to_solar_hour(
+    hour_civil: float,
+    lon_deg: float,
+    day: int | float,
+    timezone_utc_hours: float | None = None,
+) -> float:
+    """
+    Hora solar a partir de hora civil (reloj local).
+
+    solar = civil + (lon − lon_std)/15 + EoT/60
+    con lon positiva al Este y lon_std = 15 × UTC_offset.
+    """
+    if timezone_utc_hours is None:
+        timezone_utc_hours = estimate_timezone_utc(lon_deg)
+    lon_std = 15.0 * timezone_utc_hours
+    eot_hours = equation_of_time_minutes(day) / 60.0
+    return hour_civil + (lon_deg - lon_std) / 15.0 + eot_hours
+
+
 def solar_alt_az(lat_deg: float, day: int | float, hour_solar: float) -> tuple[float, float]:
     """
     Altitude and azimuth.
@@ -23,6 +53,24 @@ def solar_alt_az(lat_deg: float, day: int | float, hour_solar: float) -> tuple[f
 
     az = (degrees(atan2(sin(H), cos(H) * sin(phi) - tan(delta) * cos(phi))) + 180) % 360
     return degrees(alt), az
+
+
+def solar_alt_az_at_clock(
+    lat_deg: float,
+    lon_deg: float,
+    day: int | float,
+    hour_clock: float,
+    *,
+    use_civil_hours: bool = False,
+    timezone_utc_hours: float | None = None,
+) -> tuple[float, float]:
+    """alt/az para hora de reloj; si use_civil_hours, convierte con lon y EoT."""
+    hour_solar = hour_clock
+    if use_civil_hours:
+        hour_solar = civil_to_solar_hour(
+            hour_clock, lon_deg, day, timezone_utc_hours
+        )
+    return solar_alt_az(lat_deg, day, hour_solar)
 
 
 def r_from_alt(alt_deg: float) -> float:

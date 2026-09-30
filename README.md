@@ -74,7 +74,7 @@ Metadatos adicionales en [CITATION.cff](CITATION.cff). Historial de versiones en
 
 ## Requisitos
 
-- Python 3.10+
+- Python 3.11+
 - Dependencias fijadas en `requirements.txt`
 
 ## Flujo de trabajo (dimensionamiento de alero)

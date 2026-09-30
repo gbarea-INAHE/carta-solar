@@ -16,7 +16,7 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
 - Horas civiles (reloj) convertidas a solares con longitud, huso UTC y ecuación
   del tiempo (`civil_to_solar_hour`); activable en las UIs.
-- CI GitHub Actions (`pytest` en Python 3.10 y 3.12).
+- CI GitHub Actions (`pytest` en Python 3.11 y 3.12).
 - DOI de versión Zenodo: [10.5281/zenodo.23050120](https://doi.org/10.5281/zenodo.23050120).
 
 ## [1.1.0] - 2026-09-30
